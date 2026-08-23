@@ -1,0 +1,3020 @@
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import mammoth from "mammoth";
+import {
+  Home,
+  MessageCircle,
+  ClipboardList,
+  Send,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  BookOpen,
+  Flame,
+  ChevronLeft,
+  UploadCloud,
+  FileText,
+  Check,
+  AlertCircle,
+  X,
+  Palette,
+  GraduationCap,
+  Layers,
+  Lock,
+  Star,
+  Volume2,
+  Pause,
+  Timer,
+  Mic,
+  MicOff,
+  TrendingUp,
+  Bell,
+  BellOff,
+  Trophy,
+  CalendarClock,
+  Grid3x3,
+  ListChecks,
+  Play,
+  Medal,
+  WifiOff,
+  StickyNote,
+  Trash2,
+  Share2,
+  Copy,
+  Focus,
+  Square,
+  Moon,
+  HelpCircle,
+  ThumbsUp,
+  ThumbsDown,
+  Meh,
+  Users,
+  Smartphone,
+} from "lucide-react";
+
+/* ------------------------------------------------------------------ */
+/*  Themes                                                              */
+/* ------------------------------------------------------------------ */
+
+const THEMES = [
+  { id: "candy", name: "آب‌نبات", bg: "#FFF6FB", card: "#FFFFFF", text: "#3B2145", muted: "#9482A1", accent: "#FF6FB5", accent2: "#31D6A6", danger: "#FF5670", onAccent: "#2A1030" },
+  { id: "mono", name: "مینیمال", bg: "#F6F7F9", card: "#FFFFFF", text: "#22262F", muted: "#767C89", accent: "#12C793", accent2: "#F3A93D", danger: "#FF5555", onAccent: "#0B2B22" },
+  { id: "sunrise", name: "طلوع", bg: "#FFF8EE", card: "#FFFFFF", text: "#402B12", muted: "#A6875C", accent: "#FF9B3D", accent2: "#FF6B57", danger: "#E63946", onAccent: "#3A1D02" },
+  { id: "sky", name: "آسمانی", bg: "#F1F6FF", card: "#FFFFFF", text: "#1B2A4A", muted: "#7683A0", accent: "#3D8BFF", accent2: "#8C5CFF", danger: "#FF5468", onAccent: "#0B1730" },
+];
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  const r = (n >> 16) & 255,
+    g = (n >> 8) & 255,
+    b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function themeVars(theme) {
+  return {
+    "--bg": theme.bg,
+    "--card": theme.card,
+    "--text": theme.text,
+    "--muted": theme.muted,
+    "--muted-strong": hexToRgba(theme.muted, 0.7),
+    "--accent": theme.accent,
+    "--accent2": theme.accent2,
+    "--danger": theme.danger,
+    "--contrast": theme.onAccent || theme.bg,
+    "--border": hexToRgba(theme.text, 0.07),
+    "--border-soft": hexToRgba(theme.text, 0.1),
+    "--track": hexToRgba(theme.text, 0.08),
+    "--surface": hexToRgba(theme.text, 0.04),
+    "--surface2": hexToRgba(theme.text, 0.06),
+    "--accent-soft": hexToRgba(theme.accent, 0.08),
+    "--accent-soft2": hexToRgba(theme.accent, 0.12),
+    "--accent-soft3": hexToRgba(theme.accent, 0.14),
+    "--accent-border": hexToRgba(theme.accent, 0.35),
+    "--accent2-soft": hexToRgba(theme.accent2, 0.08),
+    "--accent2-soft2": hexToRgba(theme.accent2, 0.15),
+    "--accent2-border": hexToRgba(theme.accent2, 0.2),
+    "--danger-soft": hexToRgba(theme.danger, 0.15),
+    "--danger-border": hexToRgba(theme.danger, 0.3),
+    "--blob1": hexToRgba(theme.accent, 0.1),
+    "--blob2": hexToRgba(theme.accent2, 0.09),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sample "book" content — generic study-skills text, used until the   */
+/*  student uploads their own book                                     */
+/* ------------------------------------------------------------------ */
+
+const CHAPTERS = [
+  { id: 1, title: "فصل ۱: بازخوانی فعال", mastery: 70 },
+  { id: 2, title: "فصل ۲: تکرار فاصله‌دار", mastery: 45 },
+  { id: 3, title: "فصل ۳: مدیریت زمان مطالعه", mastery: 60 },
+];
+
+const SAMPLE_BOOK = {
+  title: "کتاب نمونه: تکنیک‌های مطالعه",
+  chapter: "فصل ۱ — یادگیری فعال",
+  source: "sample",
+  text: `فصل ۱ — یادگیری فعال
+یکی از مؤثرترین روش‌های مطالعه «بازخوانی فعال» است: به‌جای خواندن مکرر متن، سعی کن بدون نگاه‌کردن به کتاب، مطالب را از حافظه به یاد بیاوری و بازگو کنی. این کار مسیرهای عصبی مربوط به آن اطلاعات را تقویت می‌کند.
+روش دیگر «تکرار فاصله‌دار» است: به‌جای مرور یک‌باره‌ی همه‌ی مطالب، آن‌ها را در فاصله‌های زمانی رو به افزایش (مثلاً یک روز، سه روز، یک هفته) مرور کن. این روش باعث می‌شود مطالب برای مدت طولانی‌تری در حافظه بلندمدت بماند.
+تکنیک «پومودورو» هم به مدیریت زمان مطالعه کمک می‌کند: ۲۵ دقیقه تمرکز کامل روی درس، سپس ۵ دقیقه استراحت کوتاه. بعد از چهار دور، یک استراحت طولانی‌تر (۱۵ تا ۳۰ دقیقه) داشته باش.
+در نهایت، «تدریس به دیگران» یکی از قوی‌ترین راه‌ها برای فهمیدن عمیق یک مطلب است؛ اگر بتوانی موضوعی را ساده برای یک نفر دیگر توضیح بدهی، یعنی واقعاً آن را فهمیده‌ای.`,
+};
+
+const WEAK_TOPICS = [
+  { name: "تکرار فاصله‌دار", mastery: 40 },
+  { name: "تکنیک پومودورو", mastery: 52 },
+  { name: "تدریس به دیگران برای یادگیری عمیق", mastery: 58 },
+];
+
+const SUGGESTED_QUESTIONS = [
+  "این متن رو ساده برام خلاصه کن",
+  "مهم‌ترین نکاتش برای امتحان چیه؟",
+  "یه مثال ساده برام بزن",
+];
+
+const FALLBACK_QUESTIONS = [
+  {
+    question: "بازخوانی فعال یعنی چه کاری انجام بدیم؟",
+    options: [
+      "متن را چند بار پشت‌سرهم بخوانیم",
+      "بدون نگاه به کتاب، مطالب را از حافظه به یاد بیاوریم",
+      "فقط زیر نکات مهم خط بکشیم",
+      "متن را برای دیگران کپی کنیم",
+    ],
+    correct_index: 1,
+    explanation: "بازخوانی فعال یعنی تلاش برای یادآوری مطالب از حافظه، بدون نگاه‌کردن به متن اصلی.",
+    topic: "بازخوانی فعال",
+  },
+  {
+    question: "تکرار فاصله‌دار چه فایده‌ای دارد؟",
+    options: [
+      "باعث می‌شود مطالب سریع‌تر فراموش شوند",
+      "فقط برای امتحانات کوتاه‌مدت مفید است",
+      "مطالب را برای مدت طولانی‌تری در حافظه نگه می‌دارد",
+      "نیازی به مرور دوباره نیست",
+    ],
+    correct_index: 2,
+    explanation: "با مرور مطالب در فاصله‌های زمانی رو به افزایش، آن‌ها در حافظه بلندمدت پایدار می‌مانند.",
+    topic: "تکرار فاصله‌دار",
+  },
+  {
+    question: "در تکنیک پومودورو، بعد از هر چند دقیقه تمرکز، استراحت کوتاه می‌گیریم؟",
+    options: ["۱۰ دقیقه", "۲۵ دقیقه", "۴۵ دقیقه", "۶۰ دقیقه"],
+    correct_index: 1,
+    explanation: "در پومودورو، ۲۵ دقیقه تمرکز کامل و سپس ۵ دقیقه استراحت کوتاه پیشنهاد می‌شود.",
+    topic: "تکنیک پومودورو",
+  },
+];
+
+const FALLBACK_FLASHCARDS = [
+  { front: "بازخوانی فعال یعنی چی؟", back: "یادآوری مطالب از حافظه، بدون نگاه‌کردن به متن اصلی." },
+  { front: "تکرار فاصله‌دار چیه؟", back: "مرور مطالب در فاصله‌های زمانی رو به افزایش (۱ روز، ۳ روز، ۱ هفته...)." },
+  { front: "زمان‌بندی تکنیک پومودورو؟", back: "۲۵ دقیقه تمرکز کامل، سپس ۵ دقیقه استراحت کوتاه." },
+  { front: "بهترین راه فهمیدن عمیق یک مطلب؟", back: "توضیح دادن ساده‌ی آن به یک نفر دیگر (تدریس به دیگران)." },
+];
+
+const GRADES = ["هفتم", "هشتم", "نهم", "دهم", "یازدهم", "دوازدهم", "کنکوری"];
+
+const BADGES = [
+  { id: "first_exam", label: "اولین آزمون", icon: ClipboardList, check: (s) => s.examsTaken >= 1, desc: "با دادن اولین آزمونت باز می‌شه." },
+  { id: "perfect", label: "نمره کامل", icon: Star, check: (s) => s.bestScorePct >= 100, desc: "وقتی توی یه آزمون نمره کامل (۱۰۰٪) بگیری باز می‌شه." },
+  { id: "own_book", label: "آپلود کتاب", icon: BookOpen, check: (s) => s.bookUploaded, desc: "با آپلود کردن اولین کتاب یا جزوه‌ی خودت باز می‌شه." },
+  { id: "flashcards", label: "فلش‌کارت ساز", icon: Layers, check: (s) => s.flashcardsCreated, desc: "با ساختن اولین دسته فلش‌کارت باز می‌شه." },
+  { id: "chatty", label: "چت‌باز", icon: MessageCircle, check: (s) => s.chatMessagesSent >= 10, desc: "بعد از فرستادن ۱۰ پیام توی چت باز می‌شه." },
+  { id: "streak5", label: "۵ روز متوالی", icon: Flame, check: () => true, desc: "با ۵ روز پشت‌سرهم مطالعه باز می‌شه." },
+  { id: "pomodoro1", label: "اولین پومودورو", icon: Timer, check: (s) => s.pomodorosDone >= 1, desc: "با تموم کردن اولین جلسه پومودورو باز می‌شه." },
+  { id: "clean_notebook", label: "دفترچه پاک", icon: ListChecks, check: (s) => s.mistakesCleared, desc: "وقتی همه‌ی اشتباه‌های دفترچه‌ات رو مرور و پاک کنی باز می‌شه." },
+];
+
+/* ------------------------------------------------------------------ */
+/*  AI helper                                                          */
+/* ------------------------------------------------------------------ */
+
+async function askClaude(messages, system) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      system,
+      messages,
+    }),
+  });
+  const data = await res.json();
+  const text = (data.content || [])
+    .map((b) => (b.type === "text" ? b.text : ""))
+    .join("\n")
+    .trim();
+  return text;
+}
+
+function parseQuestions(raw) {
+  try {
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    const jsonStr = match ? match[0] : cleaned;
+    const arr = JSON.parse(jsonStr);
+    if (Array.isArray(arr) && arr.length > 0) {
+      return arr.filter((q) => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
+    }
+  } catch (e) {
+    /* fall through to fallback */
+  }
+  return null;
+}
+
+function parseFlashcards(raw) {
+  try {
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    const arr = JSON.parse(match ? match[0] : cleaned);
+    if (Array.isArray(arr) && arr.length) {
+      return arr.filter((c) => c && c.front && c.back);
+    }
+  } catch (e) {
+    /* fall through */
+  }
+  return null;
+}
+
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let voicesReadyPromise = null;
+function ensureVoicesLoaded() {
+  if (!("speechSynthesis" in window)) return Promise.resolve([]);
+  if (voicesReadyPromise) return voicesReadyPromise;
+  voicesReadyPromise = new Promise((resolve) => {
+    const existing = window.speechSynthesis.getVoices();
+    if (existing && existing.length) {
+      resolve(existing);
+      return;
+    }
+    let resolved = false;
+    const finish = () => {
+      if (resolved) return;
+      resolved = true;
+      resolve(window.speechSynthesis.getVoices());
+    };
+    window.speechSynthesis.onvoiceschanged = finish;
+    setTimeout(finish, 700);
+  });
+  return voicesReadyPromise;
+}
+
+function speakText(text, onEnd) {
+  if (!("speechSynthesis" in window)) return false;
+  try {
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/[#*_`]/g, "");
+    ensureVoicesLoaded().then((voices) => {
+      const utter = new SpeechSynthesisUtterance(clean);
+      const fa = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("fa"));
+      if (fa) utter.voice = fa;
+      utter.lang = fa ? fa.lang : "fa-IR";
+      utter.rate = 0.95;
+      if (onEnd) utter.onend = onEnd;
+      utter.onerror = () => onEnd && onEnd();
+      window.speechSynthesis.speak(utter);
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+function stopSpeaking() {
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+}
+
+/* ------------------------------------------------------------------ */
+/*  PDF text extraction (loads pdf.js from cdnjs on demand)            */
+/* ------------------------------------------------------------------ */
+
+let pdfjsLoadPromise = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (pdfjsLoadPromise) return pdfjsLoadPromise;
+  pdfjsLoadPromise = new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error("pdfjs load timeout"));
+    }, 8000);
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = () => {
+      clearTimeout(timeoutId);
+      try {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    script.onerror = () => {
+      clearTimeout(timeoutId);
+      reject(new Error("pdfjs load failed"));
+    };
+    document.head.appendChild(script);
+  }).catch((e) => {
+    pdfjsLoadPromise = null; // allow retry next time
+    throw e;
+  });
+  return pdfjsLoadPromise;
+}
+
+async function extractPdfText(file, onPage) {
+  const pdfjsLib = await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const maxPages = Math.min(pdf.numPages, 40);
+  let text = "";
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map((it) => it.str).join(" ");
+    text += pageText + "\n";
+    if (onPage) onPage(i, maxPages);
+  }
+  return text;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Small shared bits                                                  */
+/* ------------------------------------------------------------------ */
+
+function Squiggle({ width = 72, color, delay: d = 0 }) {
+  return (
+    <svg width={width} height="10" viewBox="0 0 80 10" className="squiggle" style={{ animationDelay: `${d}ms` }}>
+      <path d="M2 6 Q 12 1, 22 6 T 42 6 T 62 6 T 78 5" fill="none" stroke={color || "var(--accent)"} strokeWidth="3" strokeLinecap="round" pathLength="1" />
+    </svg>
+  );
+}
+
+function MasteryBar({ label, value, tone = "amber", delay: d = 0 }) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setW(value), 120 + d);
+    return () => clearTimeout(t);
+  }, [value, d]);
+  const cvar = tone === "teal" ? "var(--accent2)" : tone === "coral" ? "var(--danger)" : "var(--accent)";
+  return (
+    <div className="mb-3">
+      <div className="flex justify-between items-baseline mb-1.5">
+        <span className="text-sm" style={{ color: "var(--text)" }}>{label}</span>
+        <span className="text-xs font-bold tabular-nums" style={{ color: cvar, fontFamily: "monospace" }}>{value}%</span>
+      </div>
+      <div className="mark-track">
+        <div className="mark-fill" style={{ width: `${w}%`, background: `linear-gradient(90deg, ${cvar}, ${cvar})`, opacity: 0.9 }} />
+      </div>
+    </div>
+  );
+}
+
+function TypingDots() {
+  return (
+    <div className="flex gap-1 items-center px-1">
+      <span className="dot" style={{ animationDelay: "0ms" }} />
+      <span className="dot" style={{ animationDelay: "150ms" }} />
+      <span className="dot" style={{ animationDelay: "300ms" }} />
+    </div>
+  );
+}
+
+function LiteMarkdown({ text }) {
+  const lines = text.split("\n");
+  return (
+    <div>
+      {lines.map((line, i) => {
+        const t = line.trim();
+        if (!t) return <div key={i} style={{ height: 8 }} />;
+        if (t.startsWith("### ") || t.startsWith("## ") || t.startsWith("# ")) {
+          return <p key={i} className="text-sm font-bold mt-3 mb-1" style={{ color: "var(--accent)" }}>{t.replace(/^#{1,3}\s*/, "")}</p>;
+        }
+        if (t.startsWith("- ") || t.startsWith("• ") || t.startsWith("* ")) {
+          return <p key={i} className="text-xs leading-6" style={{ color: "var(--text)" }}>• {t.replace(/^[-*•]\s*/, "")}</p>;
+        }
+        return <p key={i} className="text-xs leading-6" style={{ color: "var(--muted)" }}>{t}</p>;
+      })}
+    </div>
+  );
+}
+
+function Confetti() {
+  const pieces = React.useMemo(
+    () =>
+      Array.from({ length: 22 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.4,
+        duration: 1.6 + Math.random() * 1.2,
+        rotate: Math.random() * 360,
+        colorVar: ["var(--accent)", "var(--accent2)", "var(--text)"][i % 3],
+        size: 6 + Math.random() * 6,
+      })),
+    []
+  );
+  return (
+    <div className="confetti-wrap">
+      {pieces.map((p) => (
+        <span
+          key={p.id}
+          className="confetti-piece"
+          style={{ left: `${p.left}%`, width: p.size, height: p.size * 0.4, background: p.colorVar, animationDelay: `${p.delay}s`, animationDuration: `${p.duration}s`, transform: `rotate(${p.rotate}deg)` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding                                                         */
+/* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  Install prompt (Add to Home Screen)                                 */
+/* ------------------------------------------------------------------ */
+
+function InstallPromptView({ onContinue }) {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+  const [platform, setPlatform] = useState("other");
+
+  useEffect(() => {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent || "" : "";
+    if (/iphone|ipad|ipod/i.test(ua)) setPlatform("ios");
+    else if (/android/i.test(ua)) setPlatform("android");
+
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+
+    const installedHandler = () => setInstalled(true);
+    window.addEventListener("appinstalled", installedHandler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", installedHandler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try {
+      const choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === "accepted") setInstalled(true);
+    } catch (e) {}
+    setDeferredPrompt(null);
+  };
+
+  return (
+    <div className="onboard fade-up">
+      <div className="blob blob-a" />
+      <div className="blob blob-b" />
+      <div className="onboard-inner">
+        <div className="onboard-icon pop-in">
+          <Smartphone size={30} color="var(--contrast)" />
+        </div>
+        <h1 className="text-2xl font-black text-center mt-4" style={{ color: "var(--text)" }}>
+          نصب اپ روی گوشیت
+        </h1>
+        <div className="flex justify-center">
+          <Squiggle delay={200} />
+        </div>
+        <p className="text-xs text-center leading-6 mt-2 mb-6" style={{ color: "var(--muted)" }}>
+          برنامه رو به صفحه اصلی گوشیت اضافه کن تا مثل یه اپ واقعی، سریع و تمام‌صفحه باز بشه.
+        </p>
+
+        {installed ? (
+          <div className="onboard-field" style={{ animationDelay: "80ms" }}>
+            <div className="flex items-center gap-2 justify-center" style={{ color: "var(--accent)" }}>
+              <CheckCircle2 size={18} />
+              <span className="text-sm font-bold">عالی، نصب شد! 🎉</span>
+            </div>
+          </div>
+        ) : deferredPrompt ? (
+          <div className="onboard-field" style={{ animationDelay: "80ms" }}>
+            <button className="primary-btn" onClick={handleInstallClick}>
+              <Smartphone size={16} />
+              نصب برنامه
+            </button>
+          </div>
+        ) : (
+          <div className="onboard-field" style={{ animationDelay: "80ms" }}>
+            {platform === "ios" ? (
+              <div className="text-xs leading-7" style={{ color: "var(--text)" }}>
+                <p className="font-bold mb-1">توی مرورگر سافاری:</p>
+                <p>۱. روی دکمه اشتراک‌گذاری <Share2 size={12} style={{ display: "inline-block", verticalAlign: "middle" }} /> پایین صفحه بزن</p>
+                <p>۲. گزینه‌ی «Add to Home Screen» رو انتخاب کن</p>
+                <p>۳. روی «Add» بزن</p>
+              </div>
+            ) : platform === "android" ? (
+              <div className="text-xs leading-7" style={{ color: "var(--text)" }}>
+                <p className="font-bold mb-1">توی کروم:</p>
+                <p>۱. روی منوی سه‌نقطه بالای صفحه بزن</p>
+                <p>۲. گزینه‌ی «Add to Home screen» یا «Install app» رو بزن</p>
+                <p>۳. تأیید کن</p>
+              </div>
+            ) : (
+              <p className="text-xs leading-7 text-center" style={{ color: "var(--muted)" }}>
+                از منوی مرورگرت گزینه‌ی «افزودن به صفحه اصلی» یا «Install» رو انتخاب کن.
+              </p>
+            )}
+          </div>
+        )}
+
+        <button
+          className="primary-btn mt-2"
+          style={installed ? undefined : { background: "var(--surface2)", color: "var(--text)", boxShadow: "none" }}
+          onClick={onContinue}
+        >
+          {installed ? "بزن بریم" : "فعلاً رد شو، برو داخل برنامه"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingView({ onComplete }) {
+  const [name, setName] = useState("");
+  const [grade, setGrade] = useState(null);
+  const [subject, setSubject] = useState("");
+
+  const canGo = name.trim() && grade;
+
+  return (
+    <div className="onboard fade-up">
+      <div className="blob blob-a" />
+      <div className="blob blob-b" />
+      <div className="onboard-inner">
+        <div className="onboard-icon pop-in">
+          <GraduationCap size={30} color="var(--contrast)" />
+        </div>
+        <h1 className="text-2xl font-black text-center mt-4" style={{ color: "var(--text)" }}>بیا شروع کنیم</h1>
+        <div className="flex justify-center">
+          <Squiggle delay={200} />
+        </div>
+        <p className="text-xs text-center leading-6 mt-2 mb-6" style={{ color: "var(--muted)" }}>
+          چندتا سؤال کوچیک، تا معلم خصوصی هوش مصنوعی رو مخصوص خودت تنظیم کنیم.
+        </p>
+
+        <div className="onboard-field" style={{ animationDelay: "80ms" }}>
+          <label className="onboard-label">اسمت چیه؟</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً آرمین" className="onboard-input" />
+        </div>
+
+        <div className="onboard-field" style={{ animationDelay: "160ms" }}>
+          <label className="onboard-label">پایه تحصیلی</label>
+          <div className="flex flex-wrap gap-2">
+            {GRADES.map((g) => (
+              <button key={g} onClick={() => setGrade(g)} className={`pill ${grade === g ? "pill-active" : ""}`}>{g}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="onboard-field" style={{ animationDelay: "320ms" }}>
+          <label className="onboard-label">درس یا موضوعی که می‌خوای روش کار کنی (اختیاری)</label>
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="مثلاً زیست‌شناسی، ریاضی، زبان..." className="onboard-input" />
+        </div>
+
+        <button className="primary-btn mt-2" disabled={!canGo} onClick={() => onComplete({ name: name.trim(), grade, subject: subject.trim() })}>
+          <Sparkles size={16} />
+          بزن بریم
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Theme sheet                                                        */
+/* ------------------------------------------------------------------ */
+
+function ThemeSheet({ open, onClose, themeId, onPick }) {
+  if (!open) return null;
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet-panel pop-in" onClick={(e) => e.stopPropagation()}>
+        <p className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>تم رنگی</p>
+        <div className="theme-grid">
+          {THEMES.map((t) => (
+            <button key={t.id} className="theme-swatch-btn" onClick={() => onPick(t.id)}>
+              <span className="theme-swatch" style={{ background: `linear-gradient(135deg, ${t.accent}, ${t.accent2})`, boxShadow: themeId === t.id ? `0 0 0 2px ${t.bg}, 0 0 0 4px ${t.accent}` : "none" }}>
+                {themeId === t.id && <Check size={14} color={t.bg} />}
+              </span>
+              <span className="text-[11px] font-bold" style={{ color: "var(--text)" }}>{t.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Badge toast                                                        */
+/* ------------------------------------------------------------------ */
+
+function BadgeToast({ badge }) {
+  if (!badge) return null;
+  const Icon = badge.icon;
+  return (
+    <div className="badge-toast pop-in">
+      <div className="badge-toast-icon"><Icon size={18} color="var(--contrast)" /></div>
+      <div>
+        <p className="text-xs font-bold" style={{ color: "var(--text)" }}>نشان جدید باز شد!</p>
+        <p className="text-[11px]" style={{ color: "var(--muted)" }}>{badge.label}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Upload view                                                         */
+/* ------------------------------------------------------------------ */
+
+const STEPS = [
+  { key: "uploading", label: "در حال آپلود" },
+  { key: "extracting", label: "استخراج متن" },
+  { key: "processing", label: "شناسایی ساختار" },
+  { key: "ready", label: "آماده‌ست!" },
+];
+
+function UploadView({ book, onSetBook }) {
+  const [status, setStatus] = useState("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [pageProgress, setPageProgress] = useState(null);
+  const [pasteMode, setPasteMode] = useState(false);
+  const [pasteTitle, setPasteTitle] = useState("");
+  const [pasteText, setPasteText] = useState("");
+  const fileRef = useRef(null);
+
+  const runPipeline = async (title, rawText) => {
+    setErrorMsg("");
+    setStatus("uploading");
+    await delay(350);
+    setStatus("extracting");
+    await delay(450);
+    setStatus("processing");
+    await delay(500);
+    const trimmed = rawText.trim().slice(0, 9000);
+    if (!trimmed) {
+      setErrorMsg("متنی برای پردازش پیدا نشد.");
+      setStatus("error");
+      return;
+    }
+    onSetBook({ title: title || "کتاب من", chapter: "متن آپلودشده", source: "custom", text: trimmed });
+    setStatus("ready");
+  };
+
+  const handleFile = async (file) => {
+    const ext = file.name.split(".").pop().toLowerCase();
+    const titleGuess = file.name.replace(/\.[^/.]+$/, "");
+    try {
+      if (ext === "txt" || ext === "md") {
+        const text = await file.text();
+        await runPipeline(titleGuess, text);
+      } else if (ext === "docx") {
+        setStatus("uploading");
+        await delay(300);
+        const buf = await file.arrayBuffer();
+        setStatus("extracting");
+        const result = await mammoth.extractRawText({ arrayBuffer: buf });
+        await runPipeline(titleGuess, result.value || "");
+      } else if (ext === "pdf") {
+        setStatus("uploading");
+        await delay(250);
+        setStatus("extracting");
+        let text;
+        try {
+          text = await extractPdfText(file, (i, total) => setPageProgress({ i, total }));
+        } catch (pdfErr) {
+          setPageProgress(null);
+          setErrorMsg("این پیش‌نمایش نتونست فایل PDF رو بارگذاری کنه (معمولاً به‌خاطر محدودیت‌های امنیتی محیط پیش‌نمایش). فعلاً بهترین راه: فایل رو txt/docx کن یا متنش رو مستقیم پیست کن.");
+          setStatus("error");
+          return;
+        }
+        setPageProgress(null);
+        if (!text.trim()) {
+          setErrorMsg("متنی از این PDF استخراج نشد — احتمالاً یک نسخه اسکن‌شده (تصویری) است که این دمو نمی‌تواند OCR کند. فایل txt/docx آپلود کن یا متن رو پیست کن.");
+          setStatus("error");
+          return;
+        }
+        await runPipeline(titleGuess, text);
+      } else {
+        setErrorMsg("این فرمت پشتیبانی نمی‌شود. از pdf، docx یا txt استفاده کن.");
+        setStatus("error");
+      }
+    } catch (e) {
+      setErrorMsg("مشکلی در پردازش فایل پیش اومد. دوباره امتحان کن یا txt/docx آپلود کن.");
+      setStatus("error");
+    }
+  };
+
+  const onPick = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+  };
+  const onDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+  const submitPaste = () => {
+    if (!pasteText.trim()) return;
+    runPipeline(pasteTitle, pasteText);
+  };
+  const reset = () => {
+    setStatus("idle");
+    setErrorMsg("");
+    setPasteMode(false);
+    setPasteText("");
+    setPasteTitle("");
+    onSetBook(null);
+  };
+
+  const busy = ["uploading", "extracting", "processing"].includes(status);
+  const stepIndex = STEPS.findIndex((s) => s.key === status);
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <p className="text-xs" style={{ color: "var(--muted)" }}>کتاب من</p>
+      <h2 className="text-2xl font-black mb-1" style={{ color: "var(--text)" }}>کتابتو آپلود کن</h2>
+      <Squiggle delay={150} />
+      <p className="text-xs leading-6 mt-3 mb-5" style={{ color: "var(--muted)" }}>
+        فایل PDF، Word (docx) یا txt کتاب یا جزوه‌ت رو آپلود کن تا معلم خصوصی هوش مصنوعی از همون محتوا باهات چت کنه و سؤال بسازه. برای PDF فقط نسخه‌های متنی پشتیبانی می‌شن، نه اسکن‌شده — اگه PDF بالا نیومد، امن‌ترین راه فعلاً پیست‌کردن متنه.
+      </p>
+
+      {book && book.source === "custom" && !busy && (
+        <div className="card mb-5" style={{ borderColor: "var(--accent2-border)" }}>
+          <div className="flex items-start gap-3">
+            <div className="ready-badge"><Check size={16} color="var(--contrast)" /></div>
+            <div className="flex-1">
+              <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{book.title}</p>
+              <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>{book.text.length.toLocaleString("fa-IR")} نویسه — آماده برای چت و آزمون</p>
+            </div>
+            <button className="icon-btn" onClick={reset}><X size={15} color="var(--muted)" /></button>
+          </div>
+        </div>
+      )}
+
+      {busy && (
+        <div className="card mb-5">
+          <div className="flex flex-col gap-3">
+            {STEPS.map((s, i) => (
+              <div key={s.key} className="flex items-center gap-3">
+                <div className="step-dot" style={{ background: i < stepIndex ? "var(--accent2)" : i === stepIndex ? "var(--accent)" : "var(--track)" }}>
+                  {i < stepIndex && <Check size={11} color="var(--contrast)" />}
+                  {i === stepIndex && <span className="spin-ring" />}
+                </div>
+                <span className="text-xs" style={{ color: i === stepIndex ? "var(--text)" : "var(--muted-strong)", fontWeight: i === stepIndex ? 700 : 500 }}>
+                  {s.label}
+                  {i === stepIndex && s.key === "extracting" && pageProgress ? ` — صفحه ${pageProgress.i} از ${pageProgress.total}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="card mb-5 flex items-start gap-2" style={{ borderColor: "var(--danger-border)" }}>
+          <AlertCircle size={16} color="var(--danger)" className="shrink-0 mt-0.5" />
+          <p className="text-xs leading-5" style={{ color: "var(--danger)" }}>{errorMsg}</p>
+        </div>
+      )}
+
+      {!busy && !pasteMode && (
+        <>
+          <label className="dropzone" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+            <UploadCloud size={26} color="var(--accent)" />
+            <span className="text-sm font-bold mt-2" style={{ color: "var(--text)" }}>فایل رو بکش اینجا یا لمس کن</span>
+            <span className="text-xs mt-1" style={{ color: "var(--muted-strong)" }}>pdf، docx، txt یا md</span>
+            <input ref={fileRef} type="file" accept=".txt,.md,.docx,.pdf" className="hidden-input" onChange={onPick} />
+          </label>
+          <button className="btn-ghost w-full mt-3 flex items-center justify-center gap-2" onClick={() => setPasteMode(true)}>
+            <FileText size={15} />
+            یا متن رو مستقیم پیست کن
+          </button>
+        </>
+      )}
+
+      {!busy && pasteMode && (
+        <div className="card">
+          <input value={pasteTitle} onChange={(e) => setPasteTitle(e.target.value)} placeholder="عنوان کتاب یا درس..." className="paste-title" />
+          <textarea value={pasteText} onChange={(e) => setPasteText(e.target.value)} placeholder="متن جزوه یا فصل کتابت رو اینجا بچسبون..." className="paste-area" rows={8} />
+          <div className="flex gap-3 mt-3">
+            <button className="btn-ghost flex-1" onClick={() => setPasteMode(false)}>انصراف</button>
+            <button className="primary-btn flex-1" disabled={!pasteText.trim()} onClick={submitPaste}>پردازش کن</button>
+          </div>
+        </div>
+      )}
+
+      {!book && !busy && (
+        <p className="text-xs text-center mt-6" style={{ color: "var(--muted-strong)" }}>
+          تا وقتی آپلود نکنی، از یک کتاب نمونه درباره‌ی روش مطالعه استفاده می‌کنیم.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Dashboard                                                           */
+/* ------------------------------------------------------------------ */
+
+function coachMessage(lastResult) {
+  if (!lastResult) return "آماده‌ام کمکت کنم! از کجا شروع کنیم؟";
+  const pct = Math.round((lastResult.score / lastResult.total) * 100);
+  if (pct >= 70) return "دمت گرم! همینطوری ادامه بده 🎉";
+  if (pct < 40) return "اشکالی نداره، بیا با هم دوباره تمرین کنیم.";
+  return "خوب پیش رفتی، یکم دیگه تمرین کن تا عالی بشه.";
+}
+
+function Dashboard({ onGoChat, onGoExam, onGoUpload, onQuickDrill, lastResult, book, summary, summaryLoading, onGenerateSummary, student, xp, unlockedBadges }) {
+  const isCustom = book.source === "custom";
+  const overall = Math.round(CHAPTERS.reduce((a, c) => a + c.mastery, 0) / CHAPTERS.length);
+  const [ring, setRing] = useState(0);
+  const [openBadge, setOpenBadge] = useState(null);
+  useEffect(() => {
+    const t = setTimeout(() => setRing(isCustom ? 0 : overall), 150);
+    return () => clearTimeout(t);
+  }, [overall, isCustom]);
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  const offset = C - (ring / 100) * C;
+
+  const level = Math.floor(xp / 60) + 1;
+  const xpPct = (xp % 60) / 60 * 100;
+
+
+  return (
+    <div className="px-5 pb-28 pt-6 fade-up">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm" style={{ color: "var(--muted)" }}>سلام، {student?.name || "دانش‌آموز"} 👋</p>
+          <h1 className="text-2xl font-black mt-1" style={{ color: "var(--text)" }}>امروز چی می‌خونیم؟</h1>
+          <Squiggle delay={200} />
+          <div className="flex gap-2 mt-2 items-center flex-wrap">
+            {student?.grade && <span className="mini-tag">پایه {student.grade}</span>}
+            {student?.subject && <span className="mini-tag">{student.subject}</span>}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="streak-badge">
+            <span className="flame-flicker"><Flame size={16} color="var(--accent)" /></span>
+            <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>۵ روز</span>
+          </div>
+          <div className="level-badge">سطح {level}</div>
+        </div>
+      </div>
+
+      <div className="xp-bar-track mb-5">
+        <div className="xp-bar-fill" style={{ width: `${xpPct}%` }} />
+      </div>
+
+      <div className="flex items-center gap-3 mb-5">
+        <div className="coach-icon">
+          <Sparkles size={22} color="var(--accent)" />
+        </div>
+        <div className="speech-bubble flex-1">{coachMessage(lastResult)}</div>
+      </div>
+
+      <button className="quick-drill-btn mb-5" onClick={onQuickDrill}>
+        <div className="flex items-center gap-2">
+          <Flame size={16} color="var(--contrast)" />
+          <span>تمرین سریع — ۵ سؤال</span>
+        </div>
+        <ChevronLeft size={16} />
+      </button>
+
+      <div className="card mb-5 flex items-center gap-5">
+        <svg width="120" height="120" viewBox="0 0 120 120" className="shrink-0">
+          <circle cx="60" cy="60" r={R} fill="none" stroke="var(--track)" strokeWidth="10" />
+          <circle cx="60" cy="60" r={R} fill="none" stroke="var(--accent)" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={offset} transform="rotate(-90 60 60)" style={{ transition: "stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)" }} />
+          <text x="60" y="56" textAnchor="middle" fontSize="26" fontWeight="900" fill="var(--text)">{ring}%</text>
+          <text x="60" y="76" textAnchor="middle" fontSize="10" fill="var(--muted)">پیشرفت کلی</text>
+        </svg>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen size={16} color="var(--accent)" />
+            <span className="text-sm font-bold" style={{ color: "var(--text)" }}>{book.title}</span>
+          </div>
+          <p className="text-xs leading-5" style={{ color: "var(--muted)" }}>
+            {isCustom ? "کتاب خودت آماده‌ست — برو چت کن یا آزمون بساز." : "۳ فصل فعال — این هفته ۸٪ پیشرفت داشتی، همینطوری ادامه بده!"}
+          </p>
+          {!isCustom && <button className="link-btn mt-2" onClick={onGoUpload}>کتاب خودتو آپلود کن ←</button>}
+        </div>
+      </div>
+
+      {!isCustom && (
+        <div className="card mb-5">
+          <h3 className="text-sm font-bold mb-4" style={{ color: "var(--text)" }}>پیشرفت فصل‌ها</h3>
+          {CHAPTERS.map((c, i) => (
+            <MasteryBar key={c.id} label={c.title} value={c.mastery} delay={i * 120} tone={c.mastery >= 75 ? "teal" : c.mastery >= 50 ? "amber" : "coral"} />
+          ))}
+        </div>
+      )}
+
+      <div className="card mb-5">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-sm font-bold" style={{ color: "var(--text)" }}>خلاصه کتاب</h3>
+          <div className="flex items-center gap-3">
+            {!summaryLoading && summary && (
+              <button className="link-btn" onClick={() => speakText(summary)}>پخش صدا</button>
+            )}
+            {!summaryLoading && <button className="link-btn" onClick={onGenerateSummary}>{summary ? "بازسازی" : "بساز"}</button>}
+          </div>
+        </div>
+        {summaryLoading && (
+          <div className="flex items-center gap-2 py-2">
+            <div className="mini-spinner" />
+            <span className="text-xs" style={{ color: "var(--muted)" }}>در حال خلاصه‌سازی...</span>
+          </div>
+        )}
+        {!summaryLoading && summary && <LiteMarkdown text={summary} />}
+        {!summaryLoading && !summary && (
+          <p className="text-xs leading-5 mt-1" style={{ color: "var(--muted)" }}>مفاهیم اصلی، تعریف‌های مهم و نکات امتحانی رو از توی کتاب برات دربیار.</p>
+        )}
+      </div>
+
+      <div className="card mb-5">
+        <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>نشان‌ها</h3>
+        <div className="flex gap-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {BADGES.map((b) => {
+            const unlocked = unlockedBadges.includes(b.id);
+            const Icon = b.icon;
+            return (
+              <button
+                key={b.id}
+                className={`badge-chip ${unlocked ? "badge-unlocked" : ""}`}
+                onClick={() => setOpenBadge(openBadge === b.id ? null : b.id)}
+              >
+                {unlocked ? <Icon size={18} color="var(--accent)" /> : <Lock size={16} color="var(--muted-strong)" />}
+                <span className="text-[10px] mt-1 text-center" style={{ color: unlocked ? "var(--text)" : "var(--muted-strong)" }}>{b.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {openBadge && (
+          <p className="text-[11px] leading-5 mt-3 pt-3" style={{ color: "var(--muted)", borderTop: "1px solid var(--border-soft)" }}>
+            {BADGES.find((b) => b.id === openBadge)?.desc}
+            {unlockedBadges.includes(openBadge) ? " (بازشده ✓)" : ""}
+          </p>
+        )}
+      </div>
+
+      {!isCustom && (
+        <div className="card mb-5">
+          <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>مباحثی که بهتره تمرین کنی</h3>
+          <div className="flex flex-col gap-2">
+            {WEAK_TOPICS.map((t) => (
+              <button key={t.name} onClick={onGoChat} className="weak-row">
+                <span className="text-sm text-right flex-1" style={{ color: "var(--text)" }}>{t.name}</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>{t.mastery}٪</span>
+                <ChevronLeft size={16} color="var(--muted)" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isCustom && (
+        <div className="card mb-5">
+          <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text)" }}>نقاط ضعف</h3>
+          <p className="text-xs leading-5" style={{ color: "var(--muted)" }}>بعد از اولین آزمونت روی این کتاب، نقاط ضعفت اینجا نمایش داده می‌شه.</p>
+        </div>
+      )}
+
+      <div className="card">
+        <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>آخرین آزمون</h3>
+        {lastResult ? (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs mb-1" style={{ color: "var(--muted)" }}>{lastResult.chapter}</p>
+              <p className="text-lg font-black" style={{ color: "var(--accent2)" }}>{lastResult.score} از {lastResult.total}</p>
+            </div>
+            <button onClick={onGoExam} className="btn-ghost">آزمون جدید</button>
+          </div>
+        ) : (
+          <button onClick={onGoExam} className="empty-cta">
+            <ClipboardList size={18} color="var(--accent)" />
+            <span>هنوز آزمونی نداده‌ای — یکی بساز</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Chat with the book                                                  */
+/* ------------------------------------------------------------------ */
+
+function ChatView({ book, autoAsk, onConsumeAutoAsk, onUserMessage, onSaveNote, isOnline }) {
+  const [messages, setMessages] = useState([
+    { role: "assistant", content: `سلام! من معلم خصوصی توئم برای «${book.title}». هر سؤالی درباره این متن داری بپرس 🌱` },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [speakingIdx, setSpeakingIdx] = useState(null);
+  const [listening, setListening] = useState(false);
+  const [savedIdx, setSavedIdx] = useState({});
+  const recognitionRef = useRef(null);
+  const scrollRef = useRef(null);
+  const bookRef = useRef(book);
+  bookRef.current = book;
+  const didMountRef = useRef(false);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    setMessages([{ role: "assistant", content: `سلام! من معلم خصوصی توئم برای «${book.title}». هر سؤالی درباره این متن داری بپرس 🌱` }]);
+  }, [book.title]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
+
+  const send = useCallback(
+    async (text) => {
+      const q = (text ?? input).trim();
+      if (!q || loading) return;
+      const next = [...messages, { role: "user", content: q }];
+      setMessages(next);
+      setInput("");
+      if (!isOnline) {
+        setMessages((cur) => [...cur, { role: "assistant", content: "چت به اینترنت نیاز داره. وقتی دوباره وصل شدی برات جواب می‌دم — تا اون موقع می‌تونی از آزمون یا فلش‌کارت آفلاین استفاده کنی." }]);
+        return;
+      }
+      setLoading(true);
+      onUserMessage && onUserMessage();
+      try {
+        const b = bookRef.current;
+        const system = `تو یک معلم خصوصی صمیمی و ساده‌گو برای یک دانش‌آموز دبیرستانی هستی. فقط و فقط بر اساس متن زیر از کتاب/جزوه دانش‌آموز پاسخ بده و از دانش عمومی خودت استفاده نکن مگر اینکه لازم باشد، که در آن صورت صریحاً بگو «این بخش در متن نبود». پاسخ کوتاه، ساده و مرحله‌به‌مرحله بده.\n\nعنوان: ${b.title}\nمتن:\n${b.text}`;
+        const apiMessages = next.map((m) => ({ role: m.role, content: m.content }));
+        const reply = await askClaude(apiMessages, system);
+        setMessages((cur) => [...cur, { role: "assistant", content: reply || "متوجه نشدم، می‌شه دوباره بپرسی؟" }]);
+      } catch (e) {
+        setMessages((cur) => [...cur, { role: "assistant", content: "یه مشکلی پیش اومد، دوباره امتحان کن." }]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [input, loading, messages, onUserMessage, isOnline]
+  );
+
+  useEffect(() => {
+    if (autoAsk) {
+      send(autoAsk);
+      onConsumeAutoAsk && onConsumeAutoAsk();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleSpeak = (i, text) => {
+    if (speakingIdx === i) {
+      stopSpeaking();
+      setSpeakingIdx(null);
+      return;
+    }
+    const ok = speakText(text, () => setSpeakingIdx(null));
+    if (ok) setSpeakingIdx(i);
+  };
+
+  const toggleMic = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "fa-IR";
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      setInput(text);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recognitionRef.current = rec;
+    rec.start();
+    setListening(true);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-5 pt-6 pb-3 fade-up">
+        <p className="text-xs" style={{ color: "var(--muted)" }}>در حال چت درباره</p>
+        <h2 className="text-lg font-black flex items-center gap-2" style={{ color: "var(--text)" }}>
+          {book.chapter || book.title}
+          <Sparkles size={16} color="var(--accent)" />
+        </h2>
+      </div>
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 pb-3" style={{ scrollbarWidth: "none" }}>
+        {messages.map((m, i) => (
+          <div key={i} className={`bubble-row ${m.role === "user" ? "justify-start" : "justify-end"}`}>
+            {m.role === "assistant" && (
+              <div className="flex flex-col items-center gap-1.5">
+                <button className="speak-btn" onClick={() => toggleSpeak(i, m.content)}>
+                  {speakingIdx === i ? <Pause size={11} color="var(--accent)" /> : <Volume2 size={11} color="var(--muted)" />}
+                </button>
+                <button
+                  className="speak-btn"
+                  title="ذخیره در یادداشت‌ها"
+                  onClick={() => { onSaveNote && onSaveNote(m.content); setSavedIdx((s) => ({ ...s, [i]: true })); }}
+                >
+                  {savedIdx[i] ? <Check size={11} color="var(--accent2)" /> : <StickyNote size={11} color="var(--muted)" />}
+                </button>
+              </div>
+            )}
+            <div className={m.role === "user" ? "bubble-user" : "bubble-ai"}>{m.content}</div>
+          </div>
+        ))}
+        {loading && (
+          <div className="bubble-row justify-end">
+            <div className="bubble-ai"><TypingDots /></div>
+          </div>
+        )}
+      </div>
+
+      {messages.length < 2 && (
+        <div className="px-5 pb-2 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {SUGGESTED_QUESTIONS.map((q) => (
+            <button key={q} className="chip" onClick={() => send(q)}>{q}</button>
+          ))}
+        </div>
+      )}
+
+      <div className="px-5 pb-24 pt-2">
+        <div className="input-bar">
+          <button className="send-btn" disabled={loading || !input.trim()} onClick={() => send()}>
+            <Send size={16} />
+          </button>
+          <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder={listening ? "در حال گوش دادن..." : "سؤالت رو بنویس..."} className="chat-input" />
+          <button className={`mic-btn ${listening ? "mic-active" : ""}`} onClick={toggleMic} title="ورودی صوتی">
+            {listening ? <MicOff size={15} /> : <Mic size={15} />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Flashcards                                                          */
+/* ------------------------------------------------------------------ */
+
+function FlashcardView({ book, onGenerated, isOnline }) {
+  const [cards, setCards] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordings, setRecordings] = useState({});
+  const [micError, setMicError] = useState(null);
+  const [playingRecIdx, setPlayingRecIdx] = useState(null);
+  const [mastery, setMastery] = useState({});
+  const [weakOnly, setWeakOnly] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const audioRef = useRef(null);
+
+  const generate = async () => {
+    setLoading(true);
+    setFlipped(false);
+    setMastery({});
+    setWeakOnly(false);
+    const withIds = (arr) => arr.map((c, i) => ({ ...c, id: i }));
+    if (!isOnline) {
+      setCards(withIds(FALLBACK_FLASHCARDS));
+      setIdx(0);
+      setLoading(false);
+      onGenerated && onGenerated();
+      return;
+    }
+    try {
+      const system = `تو دستیار ساخت فلش‌کارت مطالعه هستی. فقط بر اساس متن زیر، ۶ تا ۸ فلش‌کارت به فارسی بساز. خروجی را فقط و فقط به صورت آرایه JSON معتبر برگردان، بدون توضیح اضافه، با این ساختار: [{"front":"سؤال یا مفهوم کوتاه","back":"پاسخ یا توضیح کوتاه"}]`;
+      const user = `متن:\n${book.text}`;
+      const raw = await askClaude([{ role: "user", content: user }], system);
+      const parsed = parseFlashcards(raw);
+      setCards(withIds(parsed && parsed.length ? parsed : FALLBACK_FLASHCARDS));
+      setIdx(0);
+      onGenerated && onGenerated();
+    } catch (e) {
+      setCards(withIds(FALLBACK_FLASHCARDS));
+      setIdx(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayCards = (cards && weakOnly) ? cards.filter((c) => mastery[c.id] === "weak" || mastery[c.id] === "medium") : cards;
+
+  const next = () => {
+    setFlipped(false);
+    setIdx((i) => Math.min(i + 1, (displayCards?.length || 1) - 1));
+  };
+  const prev = () => {
+    setFlipped(false);
+    setIdx((i) => Math.max(i - 1, 0));
+  };
+
+  const markMastery = (cardId, level) => {
+    setMastery((m) => ({ ...m, [cardId]: level }));
+  };
+
+  const toggleRecord = async (cardId) => {
+    if (recording) {
+      mediaRecorderRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    setMicError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => chunksRef.current.push(e.data);
+      rec.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setRecordings((r) => ({ ...r, [cardId]: url }));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+    } catch (e) {
+      setMicError("دسترسی به میکروفون ممکن نشد.");
+    }
+  };
+
+  const playRecording = (cardId) => {
+    const url = recordings[cardId];
+    if (!url) return;
+    if (!audioRef.current) audioRef.current = new Audio();
+    audioRef.current.src = url;
+    audioRef.current.onended = () => setPlayingRecIdx(null);
+    audioRef.current.play();
+    setPlayingRecIdx(cardId);
+  };
+
+  if (!cards && !loading) {
+    return (
+      <div className="px-5 pt-6 pb-28 fade-up flex flex-col items-center text-center">
+        <p className="text-xs" style={{ color: "var(--muted)" }}>مرور سریع</p>
+        <h2 className="text-2xl font-black mb-1" style={{ color: "var(--text)" }}>فلش‌کارت‌های {book.title}</h2>
+        <Squiggle delay={150} />
+        <p className="text-xs leading-6 mt-3 mb-6" style={{ color: "var(--muted)" }}>
+          نکات کلیدی متن رو به‌صورت کارت‌های قابل‌ورق‌زدن بساز و سریع مرور کن.
+        </p>
+        <button className="primary-btn" onClick={generate}>
+          <Sparkles size={16} />
+          فلش‌کارت بساز
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="px-5 pt-24 flex flex-col items-center text-center">
+        <div className="pencil-spinner mb-5" />
+        <p className="text-sm font-bold" style={{ color: "var(--text)" }}>داره فلش‌کارت می‌سازه...</p>
+      </div>
+    );
+  }
+
+  if (weakOnly && displayCards.length === 0) {
+    return (
+      <div className="px-5 pt-24 flex flex-col items-center text-center">
+        <ThumbsUp size={32} color="var(--accent2)" />
+        <p className="text-sm font-bold mt-3" style={{ color: "var(--text)" }}>همه کارت‌ها رو بلدی!</p>
+        <button className="btn-ghost mt-4" onClick={() => setWeakOnly(false)}>نمایش همه کارت‌ها</button>
+      </div>
+    );
+  }
+
+  const safeIdx = Math.min(idx, displayCards.length - 1);
+  const card = displayCards[safeIdx];
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up flex flex-col items-center">
+      <div className="flex items-center justify-between w-full mb-3">
+        <p className="text-xs" style={{ color: "var(--muted)" }}>کارت {safeIdx + 1} از {displayCards.length}</p>
+        <button className={`weak-filter-btn ${weakOnly ? "weak-filter-active" : ""}`} onClick={() => { setWeakOnly((w) => !w); setIdx(0); setFlipped(false); }}>
+          فقط ضعیف‌ها
+        </button>
+      </div>
+
+      <div className="flip-card" onClick={() => setFlipped((f) => !f)}>
+        <div className={`flip-card-inner ${flipped ? "flipped" : ""}`}>
+          <div className="flip-face flip-front">
+            <span className="text-xs mb-2" style={{ color: "var(--muted)" }}>سؤال</span>
+            <p className="text-base font-bold leading-7" style={{ color: "var(--text)" }}>{card.front}</p>
+            <span className="text-[10px] mt-4" style={{ color: "var(--muted-strong)" }}>لمس کن برای دیدن جواب</span>
+          </div>
+          <div className="flip-face flip-back">
+            <span className="text-xs mb-2" style={{ color: "var(--contrast)" }}>پاسخ</span>
+            <p className="text-base font-bold leading-7" style={{ color: "var(--contrast)" }}>{card.back}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2 mt-4">
+        <button className={`mastery-btn mastery-bad ${mastery[card.id] === "weak" ? "mastery-active" : ""}`} onClick={(e) => { e.stopPropagation(); markMastery(card.id, "weak"); }}>
+          <ThumbsDown size={13} /> بلد نیستم
+        </button>
+        <button className={`mastery-btn mastery-mid ${mastery[card.id] === "medium" ? "mastery-active" : ""}`} onClick={(e) => { e.stopPropagation(); markMastery(card.id, "medium"); }}>
+          <Meh size={13} /> نه‌چندان
+        </button>
+        <button className={`mastery-btn mastery-good ${mastery[card.id] === "good" ? "mastery-active" : ""}`} onClick={(e) => { e.stopPropagation(); markMastery(card.id, "good"); }}>
+          <ThumbsUp size={13} /> بلدم
+        </button>
+      </div>
+
+      <button className="speak-btn-lg mt-4" onClick={(e) => { e.stopPropagation(); speakText(flipped ? card.back : card.front); }}>
+        <Volume2 size={14} color="var(--accent)" />
+        <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>خواندن با صدا</span>
+      </button>
+
+      <div className="flex items-center gap-3 mt-3">
+        <button className={`speak-btn-lg ${recording ? "recording-active" : ""}`} onClick={(e) => { e.stopPropagation(); toggleRecord(card.id); }}>
+          {recording ? <Square size={13} color="var(--danger)" /> : <Mic size={14} color="var(--accent2)" />}
+          <span className="text-xs font-bold" style={{ color: recording ? "var(--danger)" : "var(--accent2)" }}>
+            {recording ? "در حال ضبط... بزن تا تموم بشه" : "ضبط تلفظ خودت"}
+          </span>
+        </button>
+        {recordings[card.id] && !recording && (
+          <button className="speak-btn-lg" onClick={(e) => { e.stopPropagation(); playRecording(card.id); }}>
+            {playingRecIdx === card.id ? <Pause size={13} color="var(--accent)" /> : <Play size={13} color="var(--accent)" />}
+            <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>پخش صدای خودت</span>
+          </button>
+        )}
+      </div>
+      {micError && <p className="text-[11px] mt-2" style={{ color: "var(--danger)" }}>{micError}</p>}
+
+      <div className="flex gap-3 w-full mt-6">
+        <button className="btn-ghost flex-1" onClick={prev} disabled={safeIdx === 0}>قبلی</button>
+        <button className="btn-ghost flex-1" onClick={generate}>ساخت دوباره</button>
+        <button className="btn-ghost flex-1" style={{ background: "var(--accent-soft2)", color: "var(--accent)" }} onClick={next} disabled={safeIdx === displayCards.length - 1}>بعدی</button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Exam                                                                */
+/* ------------------------------------------------------------------ */
+
+function ExamView({ onFinish, book, onAskAboutTopic, quickStart, onConsumeQuickStart, isOnline }) {
+  const [step, setStep] = useState("setup");
+  const [numQ, setNumQ] = useState(5);
+  const [customNumQ, setCustomNumQ] = useState("");
+  const [difficulty, setDifficulty] = useState("متوسط");
+  const [questionType, setQuestionType] = useState("mc"); // mc | essay
+  const [questions, setQuestions] = useState([]);
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [score, setScore] = useState(0);
+  const [animScore, setAnimScore] = useState(0);
+  const [isQuick, setIsQuick] = useState(false);
+  const [essayDraft, setEssayDraft] = useState("");
+  const [essayRevealed, setEssayRevealed] = useState(false);
+
+  const start = async (opts) => {
+    const n = opts?.numQ ?? numQ;
+    const d = opts?.difficulty ?? difficulty;
+    const qType = opts?.questionType ?? questionType;
+    setStep("loading");
+    if (!isOnline) {
+      const qs = FALLBACK_QUESTIONS.slice(0, n);
+      setQuestions(qs);
+      setAnswers(new Array(qs.length).fill(null));
+      setCurrent(0);
+      setStep("taking");
+      return;
+    }
+    try {
+      const system = qType === "essay"
+        ? `تو یک طراح سؤال آموزشی هستی. فقط بر اساس متن زیر سؤال تشریحی طراحی کن. خروجی را فقط و فقط به صورت یک آرایه JSON معتبر برگردان، بدون هیچ توضیح یا Markdown اضافه. هر آیتم دقیقاً این ساختار را داشته باشد:\n{"question": "...", "model_answer": "یک پاسخ نمونه کامل و دقیق", "topic": "..."}\nمقدار topic باید یک برچسب کوتاه ۲ تا ۴ کلمه‌ای فارسی برای مبحث سؤال باشد. همه سؤال‌ها تشریحی، به زبان فارسی، و در سطح سختی "${d}" باشند.`
+        : `تو یک طراح سؤال آموزشی هستی. فقط بر اساس متن زیر سؤال طراحی کن. خروجی را فقط و فقط به صورت یک آرایه JSON معتبر برگردان، بدون هیچ توضیح یا Markdown اضافه. هر آیتم دقیقاً این ساختار را داشته باشد:\n{"question": "...", "options": ["...","...","...","..."], "correct_index": 0, "explanation": "...", "topic": "..."}\nمقدار topic باید یک برچسب کوتاه ۲ تا ۴ کلمه‌ای فارسی برای مبحثی باشد که سؤال درباره آن است. همه سؤال‌ها تستی با ۴ گزینه، به زبان فارسی، و در سطح سختی "${d}" باشند.`;
+      const user = `متن:\n${book.text}\n\nتعداد سؤال: ${n}`;
+      const raw = await askClaude([{ role: "user", content: user }], system);
+      let qs;
+      if (qType === "essay") {
+        const parsed = parseQuestions(raw);
+        qs = (parsed && parsed.length ? parsed : []).slice(0, n).map((q) => ({
+          question: q.question,
+          options: ["جواب درست دادم", "جواب اشتباه دادم"],
+          correct_index: 0,
+          explanation: q.model_answer || q.explanation || "",
+          topic: q.topic,
+          isEssay: true,
+        }));
+        if (!qs.length) qs = FALLBACK_QUESTIONS.slice(0, n);
+      } else {
+        const parsed = parseQuestions(raw);
+        qs = (parsed && parsed.length ? parsed : FALLBACK_QUESTIONS).slice(0, n);
+      }
+      setQuestions(qs);
+      setAnswers(new Array(qs.length).fill(null));
+      setCurrent(0);
+      setStep("taking");
+    } catch (e) {
+      const qs = FALLBACK_QUESTIONS.slice(0, n);
+      setQuestions(qs);
+      setAnswers(new Array(qs.length).fill(null));
+      setStep("taking");
+    }
+  };
+
+  useEffect(() => {
+    if (quickStart) {
+      setIsQuick(true);
+      start({ numQ: 5, difficulty: "متوسط" });
+      onConsumeQuickStart && onConsumeQuickStart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pick = (idx) => {
+    const next = [...answers];
+    next[current] = idx;
+    setAnswers(next);
+  };
+
+  const finish = () => {
+    const s = answers.reduce((acc, a, i) => acc + (a === questions[i].correct_index ? 1 : 0), 0);
+    setScore(s);
+    setStep("result");
+    const mistakes = questions
+      .map((q, i) => ({ q, i }))
+      .filter(({ q, i }) => answers[i] !== q.correct_index)
+      .map(({ q, i }) => ({
+        topic: q.topic || q.question.slice(0, 24),
+        question: q.question,
+        yourAnswer: q.options[answers[i]] ?? "بی‌پاسخ",
+        correctAnswer: q.options[q.correct_index],
+      }));
+    onFinish({ score: s, total: questions.length, chapter: book.chapter || book.title, mistakes });
+  };
+
+  const challengeFriend = async () => {
+    const text = `تو آزمون «${book.chapter || book.title}» نمره ${score}/${questions.length} گرفتم. تو هم امتحانش کن و ببین بهتر میشی یا نه! 💪`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "چالش آزمون", text });
+      } catch (e) {
+        /* cancelled */
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (step !== "result") return;
+    let n = 0;
+    const t = setInterval(() => {
+      n += 1;
+      setAnimScore(Math.min(n, score));
+      if (n >= score) clearInterval(t);
+    }, 90);
+    return () => clearInterval(t);
+  }, [step, score]);
+
+  if (step === "setup") {
+    const customVal = parseInt(customNumQ, 10);
+    return (
+      <div className="px-5 pt-6 pb-28 fade-up">
+        <p className="text-xs" style={{ color: "var(--muted)" }}>ساخت آزمون</p>
+        <h2 className="text-2xl font-black mb-1" style={{ color: "var(--text)" }}>آزمون {book.chapter || book.title}</h2>
+        <Squiggle delay={150} />
+
+        <div className="card mt-5 mb-4">
+          <p className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>تعداد سؤال</p>
+          <div className="flex gap-2 mb-3">
+            {[3, 5, 8].map((n) => (
+              <button key={n} onClick={() => { setNumQ(n); setCustomNumQ(""); }} className={`pill ${numQ === n && !customNumQ ? "pill-active" : ""}`}>{n}</button>
+            ))}
+          </div>
+          <input
+            type="number"
+            min="1"
+            max="20"
+            placeholder="تعداد دلخواه (۱ تا ۲۰)"
+            value={customNumQ}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCustomNumQ(v);
+              const n = parseInt(v, 10);
+              if (n > 0) setNumQ(Math.min(n, 20));
+            }}
+            className="custom-numq-input"
+          />
+        </div>
+
+        <div className="card mb-4">
+          <p className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>سطح سختی</p>
+          <div className="flex gap-2">
+            {["آسان", "متوسط", "سخت"].map((d) => (
+              <button key={d} onClick={() => setDifficulty(d)} className={`pill ${difficulty === d ? "pill-active" : ""}`}>{d}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="card mb-6">
+          <p className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>نوع سؤال</p>
+          <div className="flex gap-2">
+            <button onClick={() => setQuestionType("mc")} className={`pill ${questionType === "mc" ? "pill-active" : ""}`}>تستی (۴ گزینه‌ای)</button>
+            <button onClick={() => setQuestionType("essay")} className={`pill ${questionType === "essay" ? "pill-active" : ""}`}>تشریحی</button>
+          </div>
+        </div>
+
+        <button className="primary-btn" onClick={() => start()}>
+          <Sparkles size={16} />
+          شروع آزمون
+        </button>
+      </div>
+    );
+  }
+
+  if (step === "loading") {
+    return (
+      <div className="px-5 pt-24 flex flex-col items-center text-center">
+        <div className="pencil-spinner mb-5" />
+        <p className="text-sm font-bold" style={{ color: "var(--text)" }}>داره سؤال طراحی می‌کنه...</p>
+        <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>بر اساس متن {book.title}</p>
+      </div>
+    );
+  }
+
+  if (step === "taking") {
+    const q = questions[current];
+    const total = questions.length;
+    if (q.isEssay) {
+      const marked = answers[current] != null;
+      return (
+        <div className="px-5 pt-6 pb-28 fade-up">
+          <div className="flex items-center gap-2 mb-5">
+            {questions.map((_, i) => (
+              <div key={i} className="progress-seg" style={{ background: i < current ? "var(--accent2)" : i === current ? "var(--accent)" : "var(--track)" }} />
+            ))}
+          </div>
+          <p className="text-xs mb-2" style={{ color: "var(--muted)" }}>سؤال {current + 1} از {total} • تشریحی</p>
+          <h3 className="text-lg font-bold mb-4 leading-8" style={{ color: "var(--text)" }}>{q.question}</h3>
+
+          <textarea
+            className="essay-textarea"
+            rows={5}
+            placeholder="پاسخت رو اینجا بنویس..."
+            value={essayDraft}
+            onChange={(e) => setEssayDraft(e.target.value)}
+            disabled={essayRevealed}
+          />
+
+          {!essayRevealed ? (
+            <button className="btn-ghost w-full mt-3" onClick={() => setEssayRevealed(true)}>
+              نشون بده پاسخ نمونه
+            </button>
+          ) : (
+            <>
+              <div className="card mt-3" style={{ borderColor: "var(--accent-border)" }}>
+                <p className="text-xs font-bold mb-1" style={{ color: "var(--accent)" }}>پاسخ نمونه</p>
+                <p className="text-sm leading-6" style={{ color: "var(--text)" }}>{q.explanation}</p>
+              </div>
+              <p className="text-xs font-bold mt-4 mb-2" style={{ color: "var(--text)" }}>خودت رو با پاسخ نمونه مقایسه کن — چطور بود؟</p>
+              <div className="flex gap-3">
+                <button className={`option-card ${answers[current] === 0 ? "option-selected" : ""}`} onClick={() => pick(0)}>درست جواب دادم</button>
+                <button className={`option-card ${answers[current] === 1 ? "option-selected" : ""}`} onClick={() => pick(1)}>اشتباه بود</button>
+              </div>
+            </>
+          )}
+
+          <div className="flex gap-3 mt-6">
+            {current > 0 && <button className="btn-ghost flex-1" onClick={() => { setCurrent((c) => c - 1); setEssayDraft(""); setEssayRevealed(false); }}>قبلی</button>}
+            {current < total - 1 ? (
+              <button className="primary-btn flex-1" disabled={!marked} onClick={() => { setCurrent((c) => c + 1); setEssayDraft(""); setEssayRevealed(false); }}>بعدی</button>
+            ) : (
+              <button className="primary-btn flex-1" disabled={!marked} onClick={finish}>پایان آزمون</button>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="px-5 pt-6 pb-28 fade-up">
+        <div className="flex items-center gap-2 mb-5">
+          {questions.map((_, i) => (
+            <div key={i} className="progress-seg" style={{ background: i < current ? "var(--accent2)" : i === current ? "var(--accent)" : "var(--track)" }} />
+          ))}
+        </div>
+        <p className="text-xs mb-2" style={{ color: "var(--muted)" }}>سؤال {current + 1} از {total}</p>
+        <h3 className="text-lg font-bold mb-5 leading-8" style={{ color: "var(--text)" }}>{q.question}</h3>
+        <div className="flex flex-col gap-3 mb-6">
+          {q.options.map((opt, i) => (
+            <button key={i} onClick={() => pick(i)} className={`option-card ${answers[current] === i ? "option-selected" : ""}`}>{opt}</button>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          {current > 0 && <button className="btn-ghost flex-1" onClick={() => setCurrent((c) => c - 1)}>قبلی</button>}
+          {current < total - 1 ? (
+            <button className="primary-btn flex-1" disabled={answers[current] == null} onClick={() => setCurrent((c) => c + 1)}>بعدی</button>
+          ) : (
+            <button className="primary-btn flex-1" disabled={answers[current] == null} onClick={finish}>پایان آزمون</button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const weakTopics = (() => {
+    const map = {};
+    questions.forEach((q, i) => {
+      if (answers[i] !== q.correct_index) {
+        const t = q.topic || q.question.slice(0, 24);
+        map[t] = (map[t] || 0) + 1;
+      }
+    });
+    return Object.entries(map).map(([topic, count]) => ({ topic, count }));
+  })();
+
+  const pct = questions.length ? score / questions.length : 0;
+  const goodScore = pct >= 0.7;
+  const examMood = goodScore ? "happy" : pct < 0.4 ? "sad" : "idle";
+
+  return (
+    <div className="px-5 pt-8 pb-28 fade-up" style={{ position: "relative" }}>
+      {goodScore && <Confetti />}
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="result-icon">
+          {examMood === "happy" ? (
+            <Trophy size={30} color="var(--accent)" />
+          ) : examMood === "sad" ? (
+            <RotateCcw size={30} color="var(--accent)" />
+          ) : (
+            <Star size={30} color="var(--accent)" />
+          )}
+        </div>
+        <p className="text-sm mt-2" style={{ color: "var(--muted)" }}>نتیجه آزمون</p>
+        <div className="text-5xl font-black my-2" style={{ color: "var(--accent2)" }}>{animScore}/{questions.length}</div>
+        <Squiggle width={100} color="var(--accent2)" delay={300} />
+      </div>
+
+      {weakTopics.length > 0 && (
+        <div className="card mb-5" style={{ borderColor: "var(--danger-border)" }}>
+          <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>جاهایی که مشکل داشتی</h3>
+          <div className="flex flex-col gap-2">
+            {weakTopics.map((w) => (
+              <div key={w.topic} className="weak-topic-row">
+                <div className="flex-1">
+                  <p className="text-sm" style={{ color: "var(--text)" }}>{w.topic}</p>
+                  <p className="text-[11px]" style={{ color: "var(--danger)" }}>{w.count} اشتباه</p>
+                </div>
+                <button className="ask-btn" onClick={() => onAskAboutTopic(w.topic)}>
+                  <Sparkles size={13} />
+                  توضیح بده
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 mb-6">
+        {questions.map((q, i) => {
+          const correct = answers[i] === q.correct_index;
+          return (
+            <div key={i} className="card">
+              <div className="flex items-start gap-2 mb-2">
+                {correct ? <CheckCircle2 size={18} color="var(--accent2)" className="shrink-0 mt-0.5" /> : <XCircle size={18} color="var(--danger)" className="shrink-0 mt-0.5" />}
+                <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{q.question}</p>
+              </div>
+              <p className="text-xs mb-1" style={{ color: "var(--muted)" }}>
+                {q.isEssay ? `خودارزیابی: ${answers[i] === 0 ? "درست جواب دادم" : "اشتباه بود"}` : `پاسخ تو: ${q.options[answers[i]] ?? "بی‌پاسخ"}`}
+              </p>
+              {!correct && !q.isEssay && <p className="text-xs mb-1" style={{ color: "var(--accent2)" }}>پاسخ درست: {q.options[q.correct_index]}</p>}
+              <p className="text-xs leading-5 mt-2" style={{ color: "var(--muted)" }}>{q.isEssay ? `پاسخ نمونه: ${q.explanation}` : q.explanation}</p>
+              {!correct && (
+                <button className="ask-btn mt-3" onClick={() => onAskAboutTopic(q.topic || q.question)}>
+                  <Sparkles size={13} />
+                  از هوش مصنوعی بپرس
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-3">
+        <button className="btn-ghost flex-1" onClick={challengeFriend}>
+          <Users size={15} />
+          چالش با دوست
+        </button>
+        <button className="primary-btn flex-1" onClick={() => setStep("setup")}>
+          <RotateCcw size={16} />
+          آزمون جدید
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pomodoro timer                                                      */
+/* ------------------------------------------------------------------ */
+
+function PomodoroView({ onBack, onSessionComplete }) {
+  const FOCUS = 25 * 60;
+  const BREAK = 5 * 60;
+  const LONG_BREAK = 20 * 60;
+  const [mode, setMode] = useState("focus"); // focus | break | longBreak
+  const [secondsLeft, setSecondsLeft] = useState(FOCUS);
+  const [running, setRunning] = useState(false);
+  const [round, setRound] = useState(1);
+  const [focusModeOn, setFocusModeOn] = useState(false);
+  const [distractionCount, setDistractionCount] = useState(0);
+  const [showDistractionToast, setShowDistractionToast] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (!running) return;
+    intervalRef.current = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(intervalRef.current);
+          setRunning(false);
+          if (mode === "focus") {
+            onSessionComplete && onSessionComplete();
+            const isLong = round % 4 === 0;
+            setMode(isLong ? "longBreak" : "break");
+            return isLong ? LONG_BREAK : BREAK;
+          } else {
+            setRound((r) => (mode === "break" || mode === "longBreak" ? r + 1 : r));
+            setMode("focus");
+            return FOCUS;
+          }
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(intervalRef.current);
+  }, [running, mode, round]);
+
+  useEffect(() => {
+    if (!focusModeOn || !running || mode !== "focus") return;
+    const onVisibility = () => {
+      if (document.hidden) {
+        setDistractionCount((c) => c + 1);
+        setShowDistractionToast(true);
+      } else {
+        setTimeout(() => setShowDistractionToast(false), 2500);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [focusModeOn, running, mode]);
+
+  const total = mode === "focus" ? FOCUS : mode === "break" ? BREAK : LONG_BREAK;
+  const pct = 1 - secondsLeft / total;
+  const R = 90;
+  const C = 2 * Math.PI * R;
+  const offset = C - pct * C;
+  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
+  const ss = String(secondsLeft % 60).padStart(2, "0");
+
+  const reset = () => {
+    setRunning(false);
+    setMode("focus");
+    setSecondsLeft(FOCUS);
+    setRound(1);
+    setDistractionCount(0);
+  };
+
+  const skip = () => {
+    setRunning(false);
+    if (mode === "focus") {
+      const isLong = round % 4 === 0;
+      setMode(isLong ? "longBreak" : "break");
+      setSecondsLeft(isLong ? LONG_BREAK : BREAK);
+    } else {
+      setRound((r) => r + 1);
+      setMode("focus");
+      setSecondsLeft(FOCUS);
+    }
+  };
+
+  const label = mode === "focus" ? "زمان تمرکز" : mode === "break" ? "استراحت کوتاه" : "استراحت طولانی";
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up flex flex-col items-center">
+      <div className="flex items-center w-full mb-4">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>پومودورو</h2>
+        <div style={{ width: 32 }} />
+      </div>
+
+      <button
+        className={`focus-toggle ${focusModeOn ? "focus-toggle-on" : ""}`}
+        onClick={() => setFocusModeOn((f) => !f)}
+      >
+        <Focus size={14} />
+        <span>حالت تمرکز {focusModeOn ? "فعال" : "غیرفعال"}</span>
+      </button>
+
+      {focusModeOn && running && mode === "focus" && (
+        <p className="text-[11px] mt-2 text-center" style={{ color: "var(--muted)" }}>
+          {showDistractionToast ? "برگشتی! بیا دوباره تمرکز کنیم 🙂" : distractionCount > 0 ? `${distractionCount} بار از این صفحه بیرون رفتی` : "از این تب بیرون نرو تا حواست جمع بمونه"}
+        </p>
+      )}
+
+      <p className="text-xs mb-1 mt-1" style={{ color: "var(--muted)" }}>دور {round} • {label}</p>
+
+      <div className="relative flex items-center justify-center my-4">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r={R} fill="none" stroke="var(--track)" strokeWidth="12" />
+          <circle
+            cx="110" cy="110" r={R} fill="none"
+            stroke={mode === "focus" ? "var(--accent)" : "var(--accent2)"}
+            strokeWidth="12" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={offset}
+            transform="rotate(-90 110 110)"
+            style={{ transition: "stroke-dashoffset 1s linear" }}
+          />
+        </svg>
+        <div className="absolute flex flex-col items-center">
+          <span className="text-4xl font-black tabular-nums" style={{ color: "var(--text)", fontFamily: "monospace" }}>{mm}:{ss}</span>
+          <span className="text-xs font-bold mt-1" style={{ color: "var(--muted)" }}>{mode === "focus" ? "تمرکز" : "استراحت"}</span>
+        </div>
+      </div>
+
+      <div className="flex gap-3 w-full mt-4">
+        <button className="btn-ghost flex-1" onClick={reset}><RotateCcw size={15} /> ریست</button>
+        <button className="primary-btn flex-1" onClick={() => setRunning((r) => !r)}>
+          {running ? <Pause size={16} /> : <Play size={16} />}
+          {running ? "توقف" : "شروع"}
+        </button>
+        <button className="btn-ghost flex-1" onClick={skip}>رد کردن</button>
+      </div>
+
+      <p className="text-[11px] leading-5 mt-6 text-center" style={{ color: "var(--muted-strong)" }}>
+        ۲۵ دقیقه تمرکز، ۵ دقیقه استراحت — بعد از ۴ دور یک استراحت طولانی. با هر دور تمرکز کامل، امتیاز می‌گیری.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mistake notebook                                                    */
+/* ------------------------------------------------------------------ */
+
+function MistakeNotebookView({ onBack, mistakes, onAskAboutTopic, onClear }) {
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>دفترچه اشتباهات</h2>
+        <div style={{ width: 32 }} />
+      </div>
+
+      {mistakes.length === 0 ? (
+        <div className="flex flex-col items-center text-center pt-12">
+          <ListChecks size={36} color="var(--accent2)" />
+          <p className="text-sm font-bold mt-3" style={{ color: "var(--text)" }}>دفترچه‌ات خالیه!</p>
+          <p className="text-xs leading-5 mt-1" style={{ color: "var(--muted)" }}>سؤال‌هایی که تو آزمون‌ها اشتباه می‌زنی، اینجا برای مرور جمع می‌شن.</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs mb-4" style={{ color: "var(--muted)" }}>{mistakes.length} مورد برای مرور — قبل امتحان یه نگاه بهشون بنداز.</p>
+          <div className="flex flex-col gap-3 mb-5">
+            {mistakes.map((m, i) => (
+              <div key={i} className="card">
+                <p className="text-[11px] mb-1" style={{ color: "var(--accent)" }}>{m.topic}</p>
+                <p className="text-sm font-bold mb-2" style={{ color: "var(--text)" }}>{m.question}</p>
+                <p className="text-xs mb-1" style={{ color: "var(--danger)" }}>پاسخ تو: {m.yourAnswer}</p>
+                <p className="text-xs mb-2" style={{ color: "var(--accent2)" }}>پاسخ درست: {m.correctAnswer}</p>
+                <button className="ask-btn" onClick={() => onAskAboutTopic(m.topic)}>
+                  <Sparkles size={13} />
+                  دوباره یاد بگیر
+                </button>
+              </div>
+            ))}
+          </div>
+          <button className="btn-ghost w-full" onClick={onClear}>پاک کردن دفترچه</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spaced-repetition review calendar                                   */
+/* ------------------------------------------------------------------ */
+
+function reviewPlanFor(chapters) {
+  return [...chapters]
+    .sort((a, b) => a.mastery - b.mastery)
+    .map((c) => {
+      let when;
+      if (c.mastery < 50) when = "امروز";
+      else if (c.mastery < 75) when = "۲ روز دیگه";
+      else when = "۵ روز دیگه";
+      return { ...c, when };
+    });
+}
+
+function SpacedReviewView({ onBack, chapters, onGoChat }) {
+  const plan = reviewPlanFor(chapters);
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>تقویم مرور</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      <p className="text-xs leading-5 mb-5" style={{ color: "var(--muted)" }}>
+        بر اساس میزان تسلطت روی هر فصل، بهترین زمان مرور بعدی رو بهت پیشنهاد می‌دیم — درست مثل تکنیک «تکرار فاصله‌دار».
+      </p>
+      <div className="flex flex-col gap-3">
+        {plan.map((c) => (
+          <div key={c.id} className="card flex items-center gap-3">
+            <div className="review-when" style={{ color: c.when === "امروز" ? "var(--danger)" : "var(--accent)" }}>
+              <CalendarClock size={16} />
+              <span>{c.when}</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{c.title}</p>
+              <p className="text-[11px]" style={{ color: "var(--muted)" }}>تسلط فعلی: {c.mastery}٪</p>
+            </div>
+            {c.when === "امروز" && (
+              <button className="ask-btn" onClick={onGoChat}>
+                <Sparkles size={13} />
+                مرور کن
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Progress chart                                                      */
+/* ------------------------------------------------------------------ */
+
+function ProgressChartView({ onBack, history }) {
+  const W = 320, H = 160, PAD = 20;
+  const pts = history.map((h) => h.pct);
+  const maxP = 100;
+  const stepX = pts.length > 1 ? (W - PAD * 2) / (pts.length - 1) : 0;
+  const coords = pts.map((p, i) => ({
+    x: PAD + i * stepX,
+    y: H - PAD - (p / maxP) * (H - PAD * 2),
+  }));
+  const path = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x},${c.y}`).join(" ");
+  const avg = pts.length ? Math.round(pts.reduce((a, b) => a + b, 0) / pts.length) : 0;
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>نمودار پیشرفت</h2>
+        <div style={{ width: 32 }} />
+      </div>
+
+      {history.length === 0 ? (
+        <div className="flex flex-col items-center text-center pt-12">
+          <TrendingUp size={36} color="var(--accent2)" />
+          <p className="text-sm font-bold mt-3" style={{ color: "var(--text)" }}>هنوز داده‌ای نیست</p>
+          <p className="text-xs leading-5 mt-1" style={{ color: "var(--muted)" }}>بعد از چند آزمون، روند نمره‌هات رو اینجا می‌بینی.</p>
+        </div>
+      ) : (
+        <>
+          <div className="card mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold" style={{ color: "var(--text)" }}>روند درصد نمره‌ها</h3>
+              <span className="text-xs font-bold" style={{ color: "var(--accent2)" }}>میانگین {avg}٪</span>
+            </div>
+            <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+              <line x1={PAD} y1={H - PAD} x2={W - PAD} y2={H - PAD} stroke="var(--track)" strokeWidth="1" />
+              <path d={path} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              {coords.map((c, i) => (
+                <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="var(--accent2)" />
+              ))}
+            </svg>
+          </div>
+          <div className="flex flex-col gap-2">
+            {(() => {
+              const lastSeen = {};
+              const delta = {};
+              history.forEach((h) => {
+                if (lastSeen[h.chapter] !== undefined) {
+                  delta[h.chapter] = h.pct - lastSeen[h.chapter];
+                } else {
+                  delta[h.chapter] = null;
+                }
+                lastSeen[h.chapter] = h.pct;
+              });
+              const rows = history.slice().reverse();
+              const seen = new Set();
+              return rows.map((h, i) => {
+                const isLatestForChapter = !seen.has(h.chapter);
+                seen.add(h.chapter);
+                const d = isLatestForChapter ? delta[h.chapter] : null;
+                return (
+                  <div key={i}>
+                    {d != null && d < 0 && (
+                      <p className="regression-note">
+                        نمره‌ی {h.chapter} نسبت به دفعه قبل کمتر شده — عیب نداره، یکم دیگه وقت بذاری درست می‌شه 💪
+                      </p>
+                    )}
+                    {d != null && d > 0 && (
+                      <p className="improvement-note">
+                        نمره‌ی {h.chapter} نسبت به دفعه قبل {d}٪ بهتر شده — همینطوری ادامه بده 🎉
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-xs" style={{ color: "var(--muted)" }}>{h.chapter}</span>
+                      <span className="text-xs font-bold" style={{ color: "var(--text)" }}>{h.pct}٪</span>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Daily reminder settings                                             */
+/* ------------------------------------------------------------------ */
+
+function ReminderView({ onBack, enabled, onToggle, time, onTimeChange }) {
+  const [permission, setPermission] = useState(
+    typeof Notification !== "undefined" ? Notification.permission : "unsupported"
+  );
+
+  const requestPerm = async () => {
+    if (typeof Notification === "undefined") return;
+    const p = await Notification.requestPermission();
+    setPermission(p);
+    if (p === "granted") onToggle(true);
+  };
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>یادآور روزانه</h2>
+        <div style={{ width: 32 }} />
+      </div>
+
+      <div className="card mb-4 flex items-center gap-3">
+        {enabled ? <Bell size={20} color="var(--accent)" /> : <BellOff size={20} color="var(--muted)" />}
+        <div className="flex-1">
+          <p className="text-sm font-bold" style={{ color: "var(--text)" }}>یادآوری مطالعه روزانه</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--muted)" }}>هر روز سر ساعت مشخص یادت می‌اندازیم بیای مطالعه کنی</p>
+        </div>
+        <button
+          className={`toggle-switch ${enabled ? "toggle-on" : ""}`}
+          onClick={() => (enabled ? onToggle(false) : requestPerm())}
+        >
+          <span className="toggle-knob" />
+        </button>
+      </div>
+
+      {enabled && (
+        <div className="card mb-4">
+          <p className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>ساعت یادآوری</p>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => onTimeChange(e.target.value)}
+            className="onboard-input"
+            style={{ textAlign: "center" }}
+          />
+        </div>
+      )}
+
+      {permission === "denied" && (
+        <p className="text-xs leading-5" style={{ color: "var(--danger)" }}>دسترسی نوتیفیکیشن مسدود شده — از تنظیمات مرورگر فعالش کن.</p>
+      )}
+      {permission === "unsupported" && (
+        <p className="text-xs leading-5" style={{ color: "var(--muted)" }}>مرورگرت از نوتیفیکیشن پشتیبانی نمی‌کنه، ولی مسکات همینجا یادت می‌اندازه!</p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Leaderboard                                                         */
+/* ------------------------------------------------------------------ */
+
+const SAMPLE_FRIENDS = [
+  { name: "آیدا", xp: 340 },
+  { name: "پارسا", xp: 210 },
+  { name: "ترنم", xp: 480 },
+  { name: "سام", xp: 95 },
+];
+
+function LeaderboardView({ onBack, student, xp }) {
+  const rows = [...SAMPLE_FRIENDS, { name: student?.name || "تو", xp, isMe: true }].sort((a, b) => b.xp - a.xp);
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>لیدربرد</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      <p className="text-xs leading-5 mb-4" style={{ color: "var(--muted)" }}>رتبه‌بندی نمونه بین دوستان — هر چی بیشتر تمرین کنی، امتیازت بیشتر می‌شه.</p>
+      <div className="flex flex-col gap-2">
+        {rows.map((r, i) => (
+          <div key={r.name} className="card flex items-center gap-3" style={r.isMe ? { borderColor: "var(--accent-border)", background: "var(--accent-soft)" } : {}}>
+            <div className="rank-num" style={{ color: i === 0 ? "var(--accent)" : "var(--muted)" }}>
+              {i === 0 ? <Trophy size={16} color="var(--accent)" /> : i === 1 ? <Medal size={16} color="var(--accent2)" /> : <span>{i + 1}</span>}
+            </div>
+            <span className="text-sm flex-1" style={{ color: "var(--text)", fontWeight: r.isMe ? 800 : 500 }}>{r.name}{r.isMe ? " (تو)" : ""}</span>
+            <span className="text-xs font-bold" style={{ color: "var(--accent2)" }}>{r.xp} XP</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Notes                                                               */
+/* ------------------------------------------------------------------ */
+
+function NotesView({ onBack, notes, onDelete }) {
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>یادداشت‌های چت</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      {notes.length === 0 ? (
+        <p className="text-xs leading-6 text-center mt-8" style={{ color: "var(--muted)" }}>
+          هر پاسخی از چت که مهم بود رو با دکمه یادداشت ذخیره کن، اینجا جمع می‌شه.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {notes.map((n) => (
+            <div key={n.id} className="card">
+              <p className="text-sm leading-6 mb-2" style={{ color: "var(--text)" }}>{n.text}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px]" style={{ color: "var(--muted-strong)" }}>
+                  {new Date(n.ts).toLocaleDateString("fa-IR")}
+                </span>
+                <button className="link-btn flex items-center gap-1" style={{ color: "var(--danger)" }} onClick={() => onDelete(n.id)}>
+                  <Trash2 size={12} />
+                  حذف
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Weekly parent report                                                */
+/* ------------------------------------------------------------------ */
+
+function ParentReportView({ onBack, student, book, examsTaken, bestScorePct, xp, mistakes, pomodorosDone, scoreHistory }) {
+  const [copied, setCopied] = useState(false);
+  const recent = scoreHistory.slice(-5);
+  const avgPct = recent.length ? Math.round(recent.reduce((a, r) => a + r.pct, 0) / recent.length) : null;
+  const topWeak = (() => {
+    const map = {};
+    mistakes.forEach((m) => { map[m.topic] = (map[m.topic] || 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
+  })();
+
+  const reportText = `گزارش هفتگی مطالعه — ${student?.name || "دانش‌آموز"}
+کتاب/موضوع: ${book.title}
+تعداد آزمون‌های داده‌شده: ${examsTaken}
+بهترین نمره: ${bestScorePct}٪
+میانگین ۵ آزمون اخیر: ${avgPct != null ? avgPct + "٪" : "هنوز آزمونی نیست"}
+جلسات پومودورو تکمیل‌شده: ${pomodorosDone}
+امتیاز کل: ${xp} XP
+${topWeak.length ? `مباحثی که نیاز به تمرین بیشتر دارن: ${topWeak.join("، ")}` : "نقطه ضعف خاصی ثبت نشده."}`;
+
+  const copyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      /* ignore */
+    }
+  };
+
+  const shareReport = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "گزارش هفتگی مطالعه", text: reportText });
+      } catch (e) {
+        /* user cancelled or unsupported */
+      }
+    } else {
+      copyReport();
+    }
+  };
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>گزارش هفتگی والدین</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      <div className="card mb-5">
+        <pre className="text-xs leading-7 whitespace-pre-wrap" style={{ color: "var(--text)", fontFamily: "inherit" }}>{reportText}</pre>
+      </div>
+      <div className="flex gap-3">
+        <button className="btn-ghost flex-1" onClick={copyReport}>
+          <Copy size={14} />
+          {copied ? "کپی شد!" : "کپی متن"}
+        </button>
+        <button className="primary-btn flex-1" onClick={shareReport}>
+          <Share2 size={16} />
+          اشتراک‌گذاری
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Weekly learning path                                               */
+/* ------------------------------------------------------------------ */
+
+function WeeklyPlanView({ onBack, chapters, mistakes, onGoFlashcards, onGoExam, onGoPomodoro }) {
+  const DAYS = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
+  const weakChapters = chapters.length
+    ? chapters.slice().sort((a, b) => a.mastery - b.mastery)
+    : [{ title: "مباحث کلی" }];
+  const taskTypes = [
+    { label: "فلش‌کارت بزن", icon: Layers },
+    { label: "آزمون کوتاه بده", icon: ClipboardList },
+    { label: "۲۵ دقیقه پومودورو", icon: Timer },
+    { label: "مرور دفترچه اشتباهات", icon: ListChecks },
+  ];
+  const plan = DAYS.map((day, i) => {
+    const chapter = weakChapters[i % weakChapters.length];
+    const task = taskTypes[i % taskTypes.length];
+    return { day, chapterTitle: chapter.title || chapter.chapter || "کلی", task };
+  });
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>مسیر یادگیری هفتگی</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      <p className="text-xs leading-5 mb-4" style={{ color: "var(--muted)" }}>
+        بر اساس فصل‌هایی که ضعیف‌ترن، برای هر روز یه کار کوچیک پیشنهاد دادیم. لازم نیست دقیقاً همینا رو انجام بدی، فقط یه نقطه شروعه.
+      </p>
+      <div className="flex flex-col gap-3">
+        {plan.map((p, i) => {
+          const Icon = p.task.icon;
+          const action = i % 4 === 0 ? onGoFlashcards : i % 4 === 1 ? onGoExam : i % 4 === 2 ? onGoPomodoro : null;
+          return (
+            <div key={i} className="card flex items-center gap-3">
+              <div className="more-row-icon"><Icon size={16} color="var(--accent)" /></div>
+              <div className="flex-1">
+                <p className="text-xs font-bold" style={{ color: "var(--muted)" }}>{p.day}</p>
+                <p className="text-sm font-bold mt-0.5" style={{ color: "var(--text)" }}>{p.task.label} — {p.chapterTitle}</p>
+              </div>
+              {action && (
+                <button className="ask-btn" onClick={action}>
+                  <ChevronLeft size={13} />
+                  شروع
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Night review mode                                                  */
+/* ------------------------------------------------------------------ */
+
+function NightReviewView({ onBack, mistakes, onStartQuickDrill, onAskAboutTopic }) {
+  const topics = (() => {
+    const map = {};
+    mistakes.forEach((m) => { map[m.topic] = (map[m.topic] || 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  })();
+
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>مرور شبانه</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      <div className="flex flex-col items-center text-center mb-5">
+        <Moon size={32} color="var(--accent2)" />
+        <p className="text-sm leading-6 mt-3" style={{ color: "var(--muted)" }}>
+          قبل از امتحان، یه دور سریع رو مباحثی که قبلاً اشتباه گرفتی مرور کن.
+        </p>
+      </div>
+
+      {topics.length === 0 ? (
+        <p className="text-xs text-center leading-5" style={{ color: "var(--muted)" }}>هنوز اشتباهی ثبت نشده — عالیه! می‌تونی یه تمرین سریع هم بزنی.</p>
+      ) : (
+        <div className="flex flex-col gap-2 mb-5">
+          {topics.map(([topic, count]) => (
+            <div key={topic} className="weak-topic-row">
+              <div className="flex-1">
+                <p className="text-sm" style={{ color: "var(--text)" }}>{topic}</p>
+                <p className="text-[11px]" style={{ color: "var(--danger)" }}>{count} اشتباه</p>
+              </div>
+              <button className="ask-btn" onClick={() => onAskAboutTopic(topic)}>
+                <Sparkles size={13} />
+                توضیح بده
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button className="primary-btn" onClick={onStartQuickDrill}>
+        <Sparkles size={16} />
+        شروع مرور سریع
+      </button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Personal question notebook                                         */
+/* ------------------------------------------------------------------ */
+
+function MyQuestionsView({ onBack, questions, onAdd, onDelete }) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const t = draft.trim();
+    if (!t) return;
+    onAdd(t);
+    setDraft("");
+  };
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <div className="flex items-center w-full mb-5">
+        <button className="back-btn" onClick={onBack}><ChevronLeft size={18} color="var(--text)" /></button>
+        <h2 className="text-lg font-black flex-1 text-center" style={{ color: "var(--text)" }}>دفترچه سؤال شخصی</h2>
+        <div style={{ width: 32 }} />
+      </div>
+      <p className="text-xs leading-5 mb-4" style={{ color: "var(--muted)" }}>
+        سؤالی که موقع درس خوندن پیش اومد ولی الان نمی‌خوای ازش منحرف بشی؟ اینجا بنویسش تا فردا از معلم یا کلاس بپرسی.
+      </p>
+      <div className="flex gap-2 mb-5">
+        <input
+          className="custom-numq-input flex-1"
+          placeholder="مثلاً: فرق X و Y چیه؟"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+        />
+        <button className="primary-btn" style={{ width: "auto", padding: "0 16px" }} onClick={add}>افزودن</button>
+      </div>
+      {questions.length === 0 ? (
+        <p className="text-xs leading-5 text-center mt-6" style={{ color: "var(--muted)" }}>هنوز سؤالی ثبت نکردی.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {questions.map((q) => (
+            <div key={q.id} className="card flex items-start justify-between gap-2">
+              <p className="text-sm leading-6 flex-1" style={{ color: "var(--text)" }}>{q.text}</p>
+              <button onClick={() => onDelete(q.id)}><Trash2 size={14} color="var(--danger)" /></button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  More hub                                                            */
+/* ------------------------------------------------------------------ */
+
+function MoreHub({ onOpen, mistakeCount, reminderEnabled, noteCount, myQuestionCount }) {
+  const items = [
+    { id: "weeklyplan", label: "مسیر یادگیری هفتگی", desc: "یه برنامه کوچیک برای هر روز هفته", icon: CalendarClock },
+    { id: "nightreview", label: "مرور شبانه", desc: "دور سریع قبل از امتحان", icon: Moon },
+    { id: "pomodoro", label: "تایمر پومودورو", desc: "۲۵ دقیقه تمرکز، ۵ دقیقه استراحت", icon: Timer },
+    { id: "mistakes", label: "دفترچه اشتباهات", desc: mistakeCount ? `${mistakeCount} مورد برای مرور` : "سؤال‌های اشتباهت اینجاست", icon: ListChecks },
+    { id: "notes", label: "یادداشت‌های چت", desc: noteCount ? `${noteCount} یادداشت ذخیره‌شده` : "پاسخ‌های مهم چت رو نگه دار", icon: StickyNote },
+    { id: "myquestions", label: "دفترچه سؤال شخصی", desc: myQuestionCount ? `${myQuestionCount} سؤال برای فردا` : "سؤالی داری برای فردا بپرسی؟", icon: HelpCircle },
+    { id: "review", label: "تقویم مرور", desc: "بر اساس تکرار فاصله‌دار", icon: CalendarClock },
+    { id: "chart", label: "نمودار پیشرفت", desc: "روند نمره‌هات در طول زمان", icon: TrendingUp },
+    { id: "report", label: "گزارش هفتگی والدین", desc: "خلاصه‌ای برای فرستادن به خانواده", icon: FileText },
+    { id: "leaderboard", label: "لیدربرد", desc: "رتبه‌ات بین دوستان", icon: Trophy },
+    { id: "reminder", label: "یادآور روزانه", desc: reminderEnabled ? "فعال" : "غیرفعال", icon: Bell },
+  ];
+  return (
+    <div className="px-5 pt-6 pb-28 fade-up">
+      <p className="text-xs" style={{ color: "var(--muted)" }}>ابزارهای بیشتر</p>
+      <h2 className="text-2xl font-black mb-5" style={{ color: "var(--text)" }}>بیشتر</h2>
+      <div className="flex flex-col gap-3">
+        {items.map((it) => {
+          const Icon = it.icon;
+          return (
+            <button key={it.id} className="more-row" onClick={() => onOpen(it.id)}>
+              <div className="more-row-icon"><Icon size={18} color="var(--accent)" /></div>
+              <div className="flex-1 text-right">
+                <p className="text-sm font-bold" style={{ color: "var(--text)" }}>{it.label}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--muted)" }}>{it.desc}</p>
+              </div>
+              <ChevronLeft size={16} color="var(--muted)" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  App shell + nav                                                     */
+/* ------------------------------------------------------------------ */
+
+const TABS = [
+  { id: "dashboard", label: "داشبورد", icon: Home },
+  { id: "upload", label: "کتاب من", icon: UploadCloud },
+  { id: "chat", label: "چت", icon: MessageCircle },
+  { id: "flashcards", label: "فلش‌کارت", icon: Layers },
+  { id: "exam", label: "آزمون", icon: ClipboardList },
+  { id: "more", label: "بیشتر", icon: Grid3x3 },
+];
+
+export default function App() {
+  const [showInstallPrompt, setShowInstallPrompt] = useState(true);
+  const [tab, setTab] = useState("dashboard");
+  const [lastResult, setLastResult] = useState(null);
+  const [customBook, setCustomBook] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState(null);
+  const [student, setStudent] = useState(null);
+  const [themeId, setThemeId] = useState("candy");
+  const [themeSheetOpen, setThemeSheetOpen] = useState(false);
+
+  const [xp, setXp] = useState(0);
+  const [examsTaken, setExamsTaken] = useState(0);
+  const [bestScorePct, setBestScorePct] = useState(0);
+  const [flashcardsCreated, setFlashcardsCreated] = useState(false);
+  const [chatMessagesSent, setChatMessagesSent] = useState(0);
+  const [unlockedBadges, setUnlockedBadges] = useState(["streak5"]);
+  const [toastBadge, setToastBadge] = useState(null);
+
+  const [moreView, setMoreView] = useState("hub");
+  const [pomodorosDone, setPomodorosDone] = useState(0);
+  const [mistakes, setMistakes] = useState([]);
+  const [scoreHistory, setScoreHistory] = useState([]);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState("18:00");
+  const [examQuickStart, setExamQuickStart] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [myQuestions, setMyQuestions] = useState([]);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
+
+  const effectiveBook = customBook || SAMPLE_BOOK;
+  const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
+
+  const addXp = (n) => setXp((x) => x + n);
+
+  const handleSetBook = (b) => {
+    setCustomBook(b);
+    setLastResult(null);
+    setSummary(null);
+    if (b) addXp(15);
+  };
+
+  const generateSummary = async () => {
+    setSummaryLoading(true);
+    try {
+      const system = `تو دستیار خلاصه‌سازی کتاب درسی هستی. فقط بر اساس متن داده‌شده خلاصه بساز و چیزی از خودت به عنوان محتوای کتاب اضافه نکن. خروجی رو دقیقاً با این سه بخش و به فارسی بنویس (از ### برای عنوان بخش و از - برای هر نکته استفاده کن):\n### مفاهیم اصلی\n### تعریف‌های مهم\n### نکات کلیدی برای امتحان\nخیلی خلاصه و کاربردی بنویس.`;
+      const user = `متن:\n${effectiveBook.text}`;
+      const text = await askClaude([{ role: "user", content: user }], system);
+      setSummary(text || "خلاصه‌ای ساخته نشد، دوباره امتحان کن.");
+      addXp(8);
+    } catch (e) {
+      setSummary("در ساخت خلاصه مشکلی پیش اومد، دوباره امتحان کن.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const askAboutTopic = (topic) => {
+    setPendingPrompt(`درباره «${topic}» بیشتر و ساده‌تر برام توضیح بده، چون تو آزمونم روی این مبحث اشتباه کردم.`);
+    setTab("chat");
+  };
+
+  const handleExamFinish = (result) => {
+    setLastResult(result);
+    setExamsTaken((c) => c + 1);
+    const pct = Math.round((result.score / result.total) * 100);
+    setBestScorePct((p) => Math.max(p, pct));
+    addXp(10 + result.score * 8);
+    setScoreHistory((h) => [...h, { chapter: result.chapter, pct }].slice(-20));
+    if (result.mistakes && result.mistakes.length) {
+      setMistakes((m) => [...result.mistakes, ...m].slice(0, 30));
+    }
+  };
+
+  const handleFlashcardsGenerated = () => {
+    setFlashcardsCreated(true);
+    addXp(8);
+  };
+
+  const handlePomodoroComplete = () => {
+    setPomodorosDone((c) => c + 1);
+    addXp(12);
+  };
+
+  const clearMistakes = () => setMistakes([]);
+
+  const startQuickDrill = () => {
+    setExamQuickStart(true);
+    setTab("exam");
+  };
+
+  const saveNote = (text) => {
+    setNotes((n) => [{ id: Date.now(), text, ts: new Date().toISOString() }, ...n]);
+  };
+
+  const deleteNote = (id) => setNotes((n) => n.filter((x) => x.id !== id));
+
+  const addMyQuestion = (text) => {
+    setMyQuestions((q) => [{ id: Date.now(), text }, ...q]);
+  };
+  const deleteMyQuestion = (id) => setMyQuestions((q) => q.filter((x) => x.id !== id));
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const stats = {
+      examsTaken,
+      bestScorePct,
+      flashcardsCreated,
+      chatMessagesSent,
+      bookUploaded: !!customBook,
+      pomodorosDone,
+      mistakesCleared: mistakes.length === 0 && scoreHistory.length > 0,
+    };
+    const newly = BADGES.filter((b) => b.check(stats) && !unlockedBadges.includes(b.id));
+    if (newly.length) {
+      setUnlockedBadges((prev) => [...prev, ...newly.map((b) => b.id)]);
+      setToastBadge(newly[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examsTaken, bestScorePct, flashcardsCreated, chatMessagesSent, customBook, pomodorosDone, mistakes.length, scoreHistory.length]);
+
+  useEffect(() => {
+    if (!toastBadge) return;
+    const t = setTimeout(() => setToastBadge(null), 3000);
+    return () => clearTimeout(t);
+  }, [toastBadge]);
+
+  useEffect(() => {
+    if (!reminderEnabled || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const [h, m] = reminderTime.split(":").map(Number);
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+    const ms = target.getTime() - now.getTime();
+    const t = setTimeout(() => {
+      try {
+        new Notification("وقت مطالعه‌ست! 📚", { body: `${student?.name || "دانش‌آموز"} جان، وقتشه یه دور مرور کنی.` });
+      } catch (e) {
+        /* ignore */
+      }
+    }, ms);
+    return () => clearTimeout(t);
+  }, [reminderEnabled, reminderTime, student]);
+
+  const rootStyle = { fontFamily: "'Vazirmatn', sans-serif", ...themeVars(theme) };
+
+  return (
+    <div dir="rtl" style={rootStyle} className="app-shell">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
+
+        .app-shell {
+          min-height: 100vh;
+          background: var(--bg);
+          color: var(--text);
+          display: flex;
+          flex-direction: column;
+          max-width: 480px;
+          margin: 0 auto;
+          position: relative;
+          overflow: hidden;
+          transition: background .4s ease;
+        }
+        .view-area { flex: 1; min-height: 640px; overflow-y: auto; position: relative; z-index: 1; }
+
+        .bg-blob { position: absolute; border-radius: 50%; filter: blur(50px); z-index: 0; pointer-events: none; }
+        .bg-blob-a { width: 260px; height: 260px; top: -80px; right: -60px; background: var(--blob1); animation: driftA 16s ease-in-out infinite; }
+        .bg-blob-b { width: 220px; height: 220px; bottom: 60px; left: -70px; background: var(--blob2); animation: driftB 20s ease-in-out infinite; }
+        @keyframes driftA { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(-16px, 22px) scale(1.12);} }
+        @keyframes driftB { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(20px, -18px) scale(1.08);} }
+
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 18px; transition: background .4s ease, border-color .4s ease; }
+        .mark-track { height: 8px; border-radius: 5px; overflow: hidden; background: var(--track); }
+        .mark-fill { height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(.22,1,.36,1); }
+
+        .squiggle path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawLine .7s ease forwards; }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+        .fade-up { animation: fadeUp .5s ease both; }
+        @keyframes fadeUp { from { opacity:0; transform: translateY(10px);} to { opacity:1; transform: translateY(0);} }
+        .pop-in { animation: popIn .5s cubic-bezier(.26,1.6,.44,1) both; }
+        @keyframes popIn { from { opacity:0; transform: scale(.75);} to { opacity:1; transform: scale(1);} }
+
+        .weak-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; transition: transform .15s ease, background .15s ease; }
+        .weak-row:active { transform: scale(0.98); background: var(--accent-soft); }
+
+        .mini-tag { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-border); }
+
+        .streak-badge { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft2); animation: pulseGlow 2.2s ease-in-out infinite; }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 var(--accent-soft); } 50% { box-shadow: 0 0 0 6px transparent; } }
+        .level-badge { padding: 5px 12px; border-radius: 999px; background: var(--accent2-soft); color: var(--accent2); font-size: 11px; font-weight: 800; }
+        .xp-bar-track { height: 6px; border-radius: 4px; background: var(--track); overflow: hidden; }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; transition: width .6s ease; }
+
+        .speech-bubble { background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 9px 13px; font-size: 12px; line-height: 18px; color: var(--text); }
+
+        .quick-drill-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 14px; border: none; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: var(--contrast); font-size: 13px; font-weight: 800; }
+
+        .offline-banner { position: absolute; top: 0; left: 0; right: 0; z-index: 15; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; padding: 7px 12px; text-align: center; }
+
+        .empty-cta { display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; padding: 14px; border-radius: 12px; background: var(--accent-soft); color: var(--text); font-size: 13px; font-weight: 700; border: 1px dashed var(--accent-border); }
+        .link-btn { background: none; border: none; padding: 0; font-size: 12px; font-weight: 700; color: var(--accent); }
+        .btn-ghost { padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; background: var(--surface2); color: var(--text); border: none; }
+        .btn-ghost:disabled { opacity: .4; }
+
+        .focus-toggle { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 700; }
+        .focus-toggle-on { background: var(--accent-soft2); border-color: var(--accent-border); color: var(--accent); }
+
+        .primary-btn {
+          width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+          padding: 14px; border-radius: 14px; font-size: 14px; font-weight: 900;
+          background: linear-gradient(90deg, var(--accent), var(--accent2)); background-size: 200% 100%;
+          color: var(--contrast); border: none; transition: transform .15s ease, opacity .15s ease;
+          animation: shineShift 5s ease-in-out infinite;
+        }
+        @keyframes shineShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .primary-btn:active { transform: scale(0.97); }
+        .primary-btn:disabled { opacity: .4; animation: none; }
+
+        .pill { padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--surface); color: var(--muted); border: 1px solid var(--border-soft); transition: all .15s ease; }
+        .pill-active { background: var(--accent); color: var(--contrast); border-color: var(--accent); transform: scale(1.05); }
+
+        .custom-numq-input { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--text); font-size: 13px; font-family: inherit; }
+        .essay-textarea { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--text); font-size: 13px; line-height: 22px; font-family: inherit; resize: vertical; }
+        .regression-note { font-size: 11px; line-height: 18px; color: var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 6px 10px; margin: 4px 0 6px; }
+        .improvement-note { font-size: 11px; line-height: 18px; color: var(--accent2); background: var(--accent2-soft); border-radius: 10px; padding: 6px 10px; margin: 4px 0 6px; }
+
+        .progress-seg { height: 4px; flex: 1; border-radius: 4px; transition: background .4s ease; }
+
+        .option-card { text-align: right; padding: 14px 16px; border-radius: 14px; font-size: 14px; background: var(--surface2); color: var(--text); border: 1.5px solid var(--border-soft); transition: all .15s ease; }
+        .option-card:active { transform: scale(0.98); }
+        .option-selected { background: var(--accent-soft3); border-color: var(--accent); }
+
+        .bubble-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 12px; }
+        .bubble-user, .bubble-ai { max-width: 76%; padding: 11px 14px; border-radius: 16px; font-size: 13.5px; line-height: 22px; white-space: pre-wrap; animation: fadeUp .3s ease both; }
+        .bubble-user { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+        .bubble-ai { background: linear-gradient(135deg, var(--accent-soft3), var(--accent2-soft)); color: var(--text); border-bottom-right-radius: 4px; border: 1px solid var(--accent-border); }
+        .speak-btn { width: 22px; height: 22px; border-radius: 50%; background: var(--surface2); border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .speak-btn-lg { display: flex; align-items: center; gap: 6px; background: var(--accent-soft); border: 1px solid var(--accent-border); border-radius: 999px; padding: 8px 14px; }
+        .recording-active { background: var(--danger-soft); border-color: var(--danger-border); animation: recPulse 1s ease-in-out infinite; }
+        @keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .mastery-btn { display: flex; align-items: center; gap: 4px; padding: 7px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid var(--border-soft); background: var(--surface); color: var(--muted); }
+        .mastery-bad.mastery-active { background: var(--danger-soft); border-color: var(--danger-border); color: var(--danger); }
+        .mastery-mid.mastery-active { background: var(--accent-soft3); border-color: var(--accent-border); color: var(--accent); }
+        .mastery-good.mastery-active { background: var(--accent2-soft2); border-color: var(--accent2-border); color: var(--accent2); }
+        .weak-filter-btn { font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--muted); }
+        .weak-filter-active { background: var(--accent-soft2); border-color: var(--accent-border); color: var(--accent); }
+
+        .chip { white-space: nowrap; font-size: 12px; padding: 8px 14px; border-radius: 999px; background: var(--accent2-soft); color: var(--accent2); border: 1px solid var(--accent2-border); transition: transform .15s ease; }
+        .chip:active { transform: scale(0.95); }
+
+        .input-bar { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 6px; }
+        .chat-input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 13.5px; padding: 8px 6px; text-align: right; }
+        .chat-input::placeholder { color: var(--muted-strong); }
+        .send-btn { width: 38px; height: 38px; border-radius: 12px; background: var(--accent); color: var(--contrast); display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; transition: transform .15s ease; }
+        .send-btn:active { transform: scale(0.9) rotate(-8deg); }
+        .send-btn:disabled { opacity: .35; }
+
+        .mic-btn { width: 34px; height: 34px; border-radius: 10px; background: var(--surface2); color: var(--muted); display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; transition: all .15s ease; }
+        .mic-active { background: var(--danger-soft); color: var(--danger); animation: pulseGlow 1.4s ease-in-out infinite; }
+
+        .back-btn { width: 32px; height: 32px; border-radius: 10px; background: var(--surface2); border: none; display: flex; align-items: center; justify-content: center; transform: rotate(180deg); }
+
+        .more-row { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; transition: transform .15s ease; }
+        .more-row:active { transform: scale(0.98); }
+        .more-row-icon { width: 38px; height: 38px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        .toggle-switch { width: 44px; height: 26px; border-radius: 999px; background: var(--track); border: none; position: relative; flex-shrink: 0; transition: background .2s ease; }
+        .toggle-on { background: var(--accent); }
+        .toggle-knob { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--card); transition: transform .2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .toggle-on .toggle-knob { transform: translateX(-18px); }
+
+        .review-when { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; width: 52px; flex-shrink: 0; }
+
+        .rank-num { width: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulseDot 1s infinite ease-in-out; }
+        @keyframes pulseDot { 0%, 60%, 100% { opacity: .25; transform: scale(0.8);} 30% { opacity: 1; transform: scale(1);} }
+
+        .pencil-spinner, .mini-spinner { border-radius: 50%; border: 3px solid var(--accent-soft); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+        .pencil-spinner { width: 46px; height: 46px; }
+        .mini-spinner { width: 16px; height: 16px; border-width: 2px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 34px 16px; border-radius: 18px; cursor: pointer; border: 1.5px dashed var(--accent-border); background: var(--accent-soft); transition: background .2s ease, border-color .2s ease, transform .15s ease; }
+        .dropzone:active { background: var(--accent-soft2); border-color: var(--accent); transform: scale(0.99); }
+        .hidden-input { display: none; }
+
+        .ready-badge { width: 30px; height: 30px; border-radius: 50%; background: var(--accent2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .icon-btn { width: 28px; height: 28px; border-radius: 8px; background: var(--surface2); border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        .step-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .3s ease; }
+        .spin-ring { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--surface2); border-top-color: var(--contrast); animation: spin .7s linear infinite; }
+
+        .paste-title, .onboard-input { width: 100%; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13px; text-align: right; outline: none; transition: border-color .15s ease; }
+        .paste-title { margin-bottom: 10px; }
+        .onboard-input:focus, .paste-title:focus, .paste-area:focus { border-color: var(--accent); }
+        .paste-area { width: 100%; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13px; text-align: right; outline: none; resize: none; line-height: 22px; }
+        .paste-title::placeholder, .paste-area::placeholder, .onboard-input::placeholder { color: var(--muted-strong); }
+
+        .weak-topic-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+        .ask-btn { display: flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--accent-soft2); color: var(--accent); border: 1px solid var(--accent-border); transition: transform .15s ease; }
+        .ask-btn:active { transform: scale(0.95); }
+
+        .confetti-wrap { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; }
+        .confetti-piece { position: absolute; top: -20px; border-radius: 2px; animation: confettiFall linear forwards; opacity: 0.95; }
+        @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(520px) rotate(540deg); opacity: 0; } }
+
+        .coach-icon, .result-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft2); }
+        .result-icon { width: 56px; height: 56px; margin-bottom: 4px; }
+
+        .flame-flicker { display: inline-flex; animation: flameFlicker 1.1s ease-in-out infinite; transform-origin: bottom center; }
+        @keyframes flameFlicker { 0%,100% { transform: scale(1) rotate(0deg);} 30% { transform: scale(1.12) rotate(-4deg);} 60% { transform: scale(0.95) rotate(3deg);} }
+
+        .xp-bar-track { position: relative; overflow: hidden; }
+        .xp-bar-fill { position: relative; overflow: hidden; }
+        .xp-bar-fill::after {
+          content: ""; position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+          animation: xpShimmer 1.8s ease-in-out infinite;
+        }
+        @keyframes xpShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        .level-badge { animation: levelPop .4s cubic-bezier(.26,1.6,.44,1) both; }
+        @keyframes levelPop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .card { animation: cardIn .4s ease both; }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        .flip-card { width: 100%; max-width: 320px; height: 200px; perspective: 1200px; cursor: pointer; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform .6s cubic-bezier(.22,1,.36,1); transform-style: preserve-3d; }
+        .flip-card-inner.flipped { transform: rotateY(180deg); }
+        .flip-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .flip-front { background: var(--card); border: 1px solid var(--border-soft); }
+        .flip-back { background: linear-gradient(135deg, var(--accent), var(--accent2)); transform: rotateY(180deg); }
+
+        .badge-chip { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 62px; flex-shrink: 0; padding: 10px 4px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
+        .badge-unlocked { border-color: var(--accent-border); background: var(--accent-soft); animation: popIn .4s ease; }
+
+        .badge-toast { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--accent-border); border-radius: 16px; padding: 10px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        .badge-toast-icon { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        .onboard { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 24px; }
+        .onboard-inner { position: relative; z-index: 1; width: 100%; max-width: 380px; }
+        .onboard-icon { width: 60px; height: 60px; border-radius: 20px; margin: 0 auto; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; }
+        .onboard-field { animation: fadeUp .5s ease both; margin-bottom: 18px; }
+        .onboard-label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(60px); z-index: 0; }
+        .blob-a { width: 300px; height: 300px; top: -100px; left: -80px; background: var(--blob1); animation: driftA 14s ease-in-out infinite; }
+        .blob-b { width: 260px; height: 260px; bottom: -80px; right: -70px; background: var(--blob2); animation: driftB 18s ease-in-out infinite; }
+
+        .theme-fab { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; z-index: 20; width: 38px; height: 38px; border-radius: 12px; background: var(--card); border: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: center; transition: transform .15s ease; }
+        .theme-fab:active { transform: scale(0.9) rotate(20deg); }
+
+        .sheet-backdrop { position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; animation: fadeUp .2s ease both; }
+        .sheet-panel { width: 100%; background: var(--card); border-radius: 22px 22px 0 0; padding: 20px; border-top: 1px solid var(--border-soft); }
+        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .theme-swatch-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; }
+        .theme-swatch { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: transform .15s ease; }
+        .theme-swatch-btn:active .theme-swatch { transform: scale(0.9); }
+
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-around; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--border-soft); padding: 9px 2px calc(9px + env(safe-area-inset-bottom)); }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 4px 5px; position: relative; }
+        .nav-btn span { font-size: 9.5px; font-weight: 700; color: var(--muted-strong); transition: color .2s ease; }
+        .nav-btn.active span { color: var(--accent); }
+        .nav-btn.active .nav-icon-wrap { animation: navPop .4s cubic-bezier(.26,1.6,.44,1); }
+        @keyframes navPop { 0% { transform: scale(1);} 40% { transform: scale(1.35);} 100% { transform: scale(1);} }
+        .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 1px; opacity: 0; transform: scale(0); transition: all .2s ease; }
+        .nav-btn.active .nav-dot { opacity: 1; transform: scale(1); }
+
+        ::-webkit-scrollbar { width: 0; height: 0; }
+      `}</style>
+
+      {showInstallPrompt ? (
+        <InstallPromptView onContinue={() => setShowInstallPrompt(false)} />
+      ) : !student ? (
+        <OnboardingView onComplete={setStudent} />
+      ) : (
+        <>
+          <div className="bg-blob bg-blob-a" />
+          <div className="bg-blob bg-blob-b" />
+
+          <button className="theme-fab" onClick={() => setThemeSheetOpen(true)}>
+            <Palette size={17} color="var(--accent)" />
+          </button>
+
+          <BadgeToast badge={toastBadge} />
+
+          {!isOnline && (
+            <div className="offline-banner">
+              <WifiOff size={13} />
+              <span>حالت آفلاین — از سؤال‌ها و فلش‌کارت‌های از پیش‌ساخته‌شده استفاده می‌کنی</span>
+            </div>
+          )}
+
+          <div className="view-area">
+            {tab === "dashboard" && (
+              <Dashboard
+                onGoChat={() => setTab("chat")}
+                onGoExam={() => setTab("exam")}
+                onGoUpload={() => setTab("upload")}
+                onQuickDrill={startQuickDrill}
+                lastResult={lastResult}
+                book={effectiveBook}
+                summary={summary}
+                summaryLoading={summaryLoading}
+                onGenerateSummary={generateSummary}
+                student={student}
+                xp={xp}
+                unlockedBadges={unlockedBadges}
+              />
+            )}
+            {tab === "upload" && <UploadView book={customBook} onSetBook={handleSetBook} />}
+            {tab === "chat" && (
+              <ChatView
+                key={pendingPrompt ? "auto" : "plain"}
+                book={effectiveBook}
+                autoAsk={pendingPrompt}
+                onConsumeAutoAsk={() => setPendingPrompt(null)}
+                onUserMessage={() => { setChatMessagesSent((c) => c + 1); addXp(3); }}
+                onSaveNote={saveNote}
+                isOnline={isOnline}
+              />
+            )}
+            {tab === "flashcards" && <FlashcardView book={effectiveBook} onGenerated={handleFlashcardsGenerated} isOnline={isOnline} />}
+            {tab === "exam" && (
+              <ExamView
+                key={examQuickStart ? "quick" : "normal"}
+                onFinish={handleExamFinish}
+                book={effectiveBook}
+                onAskAboutTopic={askAboutTopic}
+                quickStart={examQuickStart}
+                onConsumeQuickStart={() => setExamQuickStart(false)}
+                isOnline={isOnline}
+              />
+            )}
+            {tab === "more" && moreView === "hub" && (
+              <MoreHub onOpen={setMoreView} mistakeCount={mistakes.length} reminderEnabled={reminderEnabled} noteCount={notes.length} myQuestionCount={myQuestions.length} />
+            )}
+            {tab === "more" && moreView === "weeklyplan" && (
+              <WeeklyPlanView
+                onBack={() => setMoreView("hub")}
+                chapters={CHAPTERS}
+                mistakes={mistakes}
+                onGoFlashcards={() => { setMoreView("hub"); setTab("flashcards"); }}
+                onGoExam={() => { setMoreView("hub"); setTab("exam"); }}
+                onGoPomodoro={() => setMoreView("pomodoro")}
+              />
+            )}
+            {tab === "more" && moreView === "nightreview" && (
+              <NightReviewView
+                onBack={() => setMoreView("hub")}
+                mistakes={mistakes}
+                onAskAboutTopic={askAboutTopic}
+                onStartQuickDrill={() => { setMoreView("hub"); startQuickDrill(); }}
+              />
+            )}
+            {tab === "more" && moreView === "myquestions" && (
+              <MyQuestionsView onBack={() => setMoreView("hub")} questions={myQuestions} onAdd={addMyQuestion} onDelete={deleteMyQuestion} />
+            )}
+            {tab === "more" && moreView === "pomodoro" && (
+              <PomodoroView onBack={() => setMoreView("hub")} onSessionComplete={handlePomodoroComplete} />
+            )}
+            {tab === "more" && moreView === "mistakes" && (
+              <MistakeNotebookView onBack={() => setMoreView("hub")} mistakes={mistakes} onAskAboutTopic={askAboutTopic} onClear={clearMistakes} />
+            )}
+            {tab === "more" && moreView === "review" && (
+              <SpacedReviewView onBack={() => setMoreView("hub")} chapters={CHAPTERS} onGoChat={() => setTab("chat")} />
+            )}
+            {tab === "more" && moreView === "chart" && (
+              <ProgressChartView onBack={() => setMoreView("hub")} history={scoreHistory} />
+            )}
+            {tab === "more" && moreView === "leaderboard" && (
+              <LeaderboardView onBack={() => setMoreView("hub")} student={student} xp={xp} />
+            )}
+            {tab === "more" && moreView === "reminder" && (
+              <ReminderView
+                onBack={() => setMoreView("hub")}
+                enabled={reminderEnabled}
+                onToggle={setReminderEnabled}
+                time={reminderTime}
+                onTimeChange={setReminderTime}
+              />
+            )}
+            {tab === "more" && moreView === "notes" && (
+              <NotesView onBack={() => setMoreView("hub")} notes={notes} onDelete={deleteNote} />
+            )}
+            {tab === "more" && moreView === "report" && (
+              <ParentReportView
+                onBack={() => setMoreView("hub")}
+                student={student}
+                book={effectiveBook}
+                examsTaken={examsTaken}
+                bestScorePct={bestScorePct}
+                xp={xp}
+                mistakes={mistakes}
+                pomodorosDone={pomodorosDone}
+                scoreHistory={scoreHistory}
+              />
+            )}
+          </div>
+
+          <nav className="bottom-nav">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.id;
+              return (
+                <button key={t.id} className={`nav-btn ${active ? "active" : ""}`} onClick={() => setTab(t.id)}>
+                  <span className="nav-icon-wrap">
+                    <Icon size={18} color={active ? "var(--accent)" : "var(--muted-strong)"} />
+                  </span>
+                  <span>{t.label}</span>
+                  <div className="nav-dot" />
+                </button>
+              );
+            })}
+          </nav>
+
+          <ThemeSheet open={themeSheetOpen} onClose={() => setThemeSheetOpen(false)} themeId={themeId} onPick={(id) => { setThemeId(id); setThemeSheetOpen(false); }} />
+        </>
+      )}
+    </div>
+  );
+}
